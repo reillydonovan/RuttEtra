@@ -1,136 +1,248 @@
-# RuttEtra
+# RuttEtra - Unity Video Synthesizer
 
-A real-time recreation of the legendary **Rutt/Etra Video Synthesizer** in Unity. Transform your webcam feed into mesmerizing 3D wireframe landscapes where image brightness controls depth displacement.
-
-![Unity](https://img.shields.io/badge/Unity-6000.2+-black?logo=unity)
-![License](https://img.shields.io/badge/license-MIT-blue)
-
-## About
-
-The original Rutt/Etra was an analog video synthesizer created by Steve Rutt and Bill Etra in the early 1970s. It became iconic for its ability to transform standard video into three-dimensional wireframe representations, where the luminance (brightness) of each scan line controlled the vertical displacement of that line in 3D space.
-
-This project brings that classic effect to modern hardware using Unity's Universal Render Pipeline, allowing real-time manipulation of webcam feeds with customizable parameters.
-
-## Features
-
-- **Real-time webcam processing** with configurable resolution
-- **Luminance-based displacement** — brighter areas push forward, darker areas recede
-- **Horizontal & vertical scan lines** with adjustable density
-- **Custom color modes** — use source video colors or stylized gradients
-- **Glow and noise effects** for authentic CRT aesthetics
-- **Orbital camera controls** for viewing the 3D effect from any angle
-- **Scriptable settings** for easy preset management
-
-## Requirements
-
-- **Unity 6** (6000.2.14f1 or later)
-- **Universal Render Pipeline (URP)**
-- A webcam
+A real-time recreation of the classic **Rutt/Etra video synthesizer** (1970s analog video art tool) in Unity 6 with URP. Transforms webcam input into 3D wireframe visualizations where brightness controls depth displacement.
 
 ## Quick Start
 
-1. **Clone or download** this repository
-2. **Open the project** in Unity 6
-3. Go to **RuttEtra → Setup Scene** in the menu bar
-4. **Press Play** — the effect will begin using your default webcam
+1. Open the project in **Unity 6** (uses Universal Render Pipeline)
+2. Run `RuttEtra > Setup Scene` from the menu to create the base scene objects
+3. Run `RuttEtra > Create UI` to generate the control panel
+4. Run `RuttEtra > Add Orbit Camera` to add mouse camera controls
+5. Press **Play** - the webcam will start and you'll see the visualization
+6. Use the right-side panel to adjust parameters
+7. Press **H** to hide/show the UI panel
+8. **Right-click + drag** to orbit camera, **scroll wheel** to zoom
 
-## Controls
+---
 
-| Input | Action |
-|-------|--------|
-| `W` / `↑` | Tilt camera up |
-| `S` / `↓` | Tilt camera down |
-| `A` / `←` | Orbit camera left |
-| `D` / `→` | Orbit camera right |
-| `Mouse Scroll` | Zoom in/out |
-| `Space` | Toggle displacement inversion |
-| `Tab` | Toggle source colors |
-| `V` | Toggle vertical scan lines |
-| `R` | Reset camera position |
-| `H` | Toggle UI panel (if set up) |
+## Project Architecture
 
-## Configuration
+### Core Scripts (`Assets/Scripts/RuttEtra/`)
 
-All visual parameters are stored in a `RuttEtraSettings` ScriptableObject located at `Assets/Settings/RuttEtraSettings.asset`. You can adjust these in the Inspector or create multiple presets.
+| File | Purpose |
+|------|---------|
+| `RuttEtraController.cs` | Main controller, holds references to settings/webcam/mesh |
+| `RuttEtraSettings.cs` | ScriptableObject with all configurable parameters |
+| `RuttEtraMeshGenerator.cs` | Generates and updates the wireframe mesh from webcam luminance |
+| `WebcamCapture.cs` | Handles webcam initialization and frame capture |
+| `RuttEtraUI.cs` | Runtime UI controller, binds sliders/toggles to settings |
+| `RuttEtraAnimator.cs` | LFO-based parameter animation system |
+| `OrbitCamera.cs` | Mouse-controlled orbit camera |
 
-### Mesh Resolution
-| Parameter | Range | Description |
-|-----------|-------|-------------|
-| `Horizontal Resolution` | 16–512 | Number of vertices per scan line |
-| `Vertical Resolution` | 8–256 | Number of scan lines |
+### Editor Scripts (`Assets/Scripts/RuttEtra/Editor/`)
 
-### Displacement
-| Parameter | Range | Description |
-|-----------|-------|-------------|
-| `Displacement Strength` | 0–5 | How far vertices displace based on luminance |
-| `Displacement Smoothing` | 0–1 | Temporal smoothing to reduce jitter |
-| `Invert Displacement` | Toggle | Swap bright/dark displacement direction |
+| File | Purpose |
+|------|---------|
+| `RuttEtraSceneSetup.cs` | Menu item to create scene hierarchy |
+| `RuttEtraUICreator.cs` | Programmatically builds the UI Canvas and controls |
 
-### Visual Style
-| Parameter | Range | Description |
-|-----------|-------|-------------|
-| `Line Width` | 0.001–0.05 | Thickness of scan lines |
-| `Primary Color` | Color | Base color for low luminance areas |
-| `Secondary Color` | Color | Color for high luminance areas |
-| `Color Blend` | 0–1 | How much luminance affects color gradient |
-| `Use Source Color` | Toggle | Use original webcam colors instead |
+### Shaders (`Assets/Shaders/`)
+
+| File | Purpose |
+|------|---------|
+| `RuttEtraScanLine.shader` | URP shader with geometry shader for variable line width, glow, noise |
+| `WebcamProcess.shader` | (Optional) Webcam preprocessing |
+
+### Settings Asset
+
+- `Assets/Settings/RuttEtraSettings.asset` - The ScriptableObject instance holding all parameters
+
+---
+
+## Feature Overview
+
+### Input Signal Processing
+- **Brightness/Contrast/Threshold/Gamma** - Standard image adjustments
+- **Edge Detect** - Use edges instead of luminance for displacement
+- **Posterize** - Quantize depth levels (1-8)
+
+### Z-Axis Displacement
+- **Strength** - How much luminance affects depth
+- **Smoothing** - Temporal smoothing between frames
+- **Offset** - Base Z offset
+- **Invert** - Flip bright/dark displacement
+- **Z Modulation** - Sine wave modulation on Z
+
+### Raster Controls
+- **Position** - H/V offset of the mesh (applied to vertices)
+- **Scale** - H/V/Overall scale
+- **Rotation** - X/Y/Z euler rotation
+- **Distortion** - Keystone H/V, Barrel/Pincushion
 
 ### Scan Lines
-| Parameter | Range | Description |
-|-----------|-------|-------------|
-| `Scan Line Skip` | 1–8 | Draw every Nth line (higher = fewer lines) |
-| `Show Horizontal Lines` | Toggle | Enable horizontal scan lines |
-| `Show Vertical Lines` | Toggle | Enable vertical scan lines |
+- **Line Skip** - Draw every Nth line
+- **H/V Lines** - Toggle horizontal/vertical lines
+- **Interlace** - Alternating field display
+
+### Deflection Wave
+- **H/V Wave** - Amplitude of sine wave deflection
+- **Frequency/Speed** - Wave parameters
+
+### Line Style
+- **Width** - Line thickness (uses geometry shader)
+- **Taper** - Edge fading
+- **Glow** - Intensity boost
+
+### Colors
+- **Primary/Secondary** - Two colors for depth-based blending
+- **Blend** - How much to blend based on luminance
+- **Source Color** - Use original webcam colors
 
 ### Post Effects
-| Parameter | Range | Description |
-|-----------|-------|-------------|
-| `Glow Intensity` | 0–2 | Additive glow on lines |
-| `Noise Amount` | 0–1 | Analog noise/jitter effect |
+- **Noise** - Per-pixel noise
+- **Persistence** - Temporal glow trails
+- **Flicker** - Random brightness variation
+- **Bloom** - Soft glow effect
 
-## Project Structure
+### Animation System
+Quick toggles for animated effects:
+- **Rotate** - Auto Y-axis rotation
+- **Hue Cycle** - Color spectrum cycling
+- **Wave** - Animated wave deflection
+- **Z Pulse** - Displacement pulsing
+- **Breathe** - Scale breathing
+- **Distortion** - Animated keystone/barrel
+
+Advanced LFOs available on `RuttEtraAnimator` component for per-parameter animation with waveform selection (Sine, Triangle, Square, Sawtooth, Random).
+
+---
+
+## Technical Details
+
+### Mesh Generation (`RuttEtraMeshGenerator.cs`)
+- Creates a grid of vertices based on `horizontalResolution` x `verticalResolution`
+- Uses `MeshTopology.Lines` for wireframe rendering
+- Updates vertex positions each frame based on luminance buffer
+- Applies all transformations (position, scale, rotation, distortion) directly to vertices
+
+### Shader (`RuttEtraScanLine.shader`)
+- Uses **geometry shader** to expand lines into quads for variable width
+- Additive blending (`Blend SrcAlpha One`) for glow effect
+- Passes: vertex -> geometry (line to quad) -> fragment
+- Properties: `_LineWidth`, `_GlowIntensity`, `_NoiseAmount`, `_LineTaper`, `_Bloom`
+
+### UI System
+- Built programmatically via `RuttEtraUICreator.cs`
+- Uses Unity's built-in `Text` for most labels, `TextMeshPro` for resolution display
+- `RectMask2D` for scrolling (not `Mask` - avoids stencil buffer issues)
+- Requires `InputSystemUIInputModule` for new Input System compatibility
+
+### Camera (`OrbitCamera.cs`)
+- Right-click + drag to orbit
+- Scroll wheel to zoom
+- Continues updating position when hovering over UI (only skips input capture)
+
+---
+
+## Scene Hierarchy
 
 ```
-Assets/
-├── Scripts/
-│   └── RuttEtra/
-│       ├── RuttEtraController.cs    # Main orchestrator & camera controls
-│       ├── RuttEtraMeshGenerator.cs # Mesh generation & displacement
-│       ├── RuttEtraSettings.cs      # ScriptableObject settings
-│       ├── RuttEtraUI.cs            # UI bindings
-│       ├── WebcamCapture.cs         # Webcam input handling
-│       └── Editor/
-│           └── RuttEtraSceneSetup.cs # Editor tooling
-├── Shaders/
-│   ├── RuttEtraScanLine.shader      # Line rendering with glow/noise
-│   └── WebcamProcess.shader         # Webcam mirroring/processing
-└── Settings/
-    └── RuttEtraSettings.asset       # Default configuration
+RuttEtra_Controller
+├── Webcam_Capture (WebcamCapture)
+└── RuttEtra_Mesh (MeshFilter, MeshRenderer, RuttEtraMeshGenerator)
+
+Main Camera (OrbitCamera)
+
+EventSystem (InputSystemUIInputModule)
+
+RuttEtra_Canvas
+├── ControlPanel
+│   └── Scroll
+│       └── Content (all UI controls)
+└── RuttEtra_UI (RuttEtraUI component)
 ```
 
-## How It Works
+---
 
-1. **WebcamCapture** grabs frames from your webcam and optionally mirrors them
-2. **RuttEtraMeshGenerator** creates a grid of vertices matching the configured resolution
-3. Each frame, the webcam texture is sampled and converted to luminance values
-4. Vertex positions are displaced along the Z-axis based on their corresponding luminance
-5. The mesh is rendered as lines (not triangles) using `MeshTopology.Lines`
-6. A custom shader adds glow and noise effects with additive blending
+## Known Issues / Notes
 
-## Tips
+1. **Line Width** - Requires geometry shader support (Shader Model 4.0+)
+2. **Webcam** - First available webcam is used; set `preferredDeviceName` on WebcamCapture to specify
+3. **Resolution changes** - Changing H/V resolution triggers mesh regeneration
+4. **Feedback** - Settings exist but visual feedback effect not fully implemented yet
+5. **Performance** - High resolutions (256x128+) may impact framerate
 
-- **Lower resolution** (64×32) gives a more authentic, chunky retro look
-- **Higher resolution** (256×128) creates smoother, more detailed surfaces
-- **Increase Scan Line Skip** for the classic spaced-line aesthetic
-- **Enable vertical lines** along with horizontal for a grid/mesh effect
-- **Use dark backgrounds** in your webcam view for dramatic displacement contrast
-- **Invert displacement** to make dark areas pop forward instead of bright
+---
+
+## Dependencies
+
+- **Unity 6** (2023.x or later)
+- **Universal Render Pipeline** (URP)
+- **TextMeshPro** (for resolution text display)
+- **Input System** (new input system, not legacy)
+
+Packages in `Packages/manifest.json`:
+```json
+"com.unity.inputsystem": "1.11.2",
+"com.unity.render-pipelines.universal": "17.0.3",
+"com.unity.textmeshpro": "3.0.6"
+```
+
+---
+
+## For AI Assistants / Future Sessions
+
+### MCP Integration
+This project uses Unity MCP for AI-assisted development. Key tools:
+- `recompile_scripts` - Recompile after code changes
+- `execute_menu_item` - Run editor menu items like `RuttEtra/Create UI`
+- `save_scene` - Save current scene
+- `update_component` - Modify component properties
+- `get_gameobject` - Inspect scene objects
+
+### Common Tasks
+
+**Recreate UI after code changes:**
+```
+1. recompile_scripts
+2. execute_menu_item: "RuttEtra/Create UI"
+3. save_scene
+```
+
+**Add new setting:**
+1. Add field to `RuttEtraSettings.cs`
+2. Add UI field to `RuttEtraUI.cs`
+3. Add binding in `RuttEtraUI.BindEvents()`
+4. Add UI creation in `RuttEtraUICreator.cs`
+5. Use setting in `RuttEtraMeshGenerator.cs` or shader
+
+**Add new animation:**
+1. Add quick toggle/speed to `RuttEtraAnimator.cs`
+2. Add UI fields to `RuttEtraUI.cs`
+3. Add creation in `RuttEtraUICreator.cs` under ANIMATION section
+4. Add binding to animator method in `RuttEtraUI.BindEvents()`
+
+### File Locations
+- Settings asset: `Assets/Settings/RuttEtraSettings.asset`
+- Main scene: `Assets/Scenes/RuttEtraUI.unity`
+- Shader: `Assets/Shaders/RuttEtraScanLine.shader`
+
+### Architecture Decisions
+- **Settings as ScriptableObject** - Allows persistence and easy inspector editing
+- **Programmatic UI** - Created via code to avoid manual UI setup and ensure consistency
+- **Vertex-based transforms** - Position/scale/rotation applied to vertices, not Transform, for better control
+- **Geometry shader for lines** - Enables variable line width (Unity's line topology is always 1px)
+- **Auto-find references** - Components find each other via `FindFirstObjectByType` to reduce manual wiring
+
+---
+
+## Original Rutt/Etra Reference
+
+The original Rutt/Etra (1973) was an analog video synthesizer that:
+- Took NTSC video input
+- Used luminance to deflect electron beam in Z-axis
+- Created iconic "3D wireframe" video art aesthetic
+- Was used by artists like Nam June Paik, Steina & Woody Vasulka
+
+This digital recreation aims to capture that aesthetic with modern real-time capabilities.
+
+---
 
 ## License
 
-MIT License — feel free to use, modify, and distribute.
+[Add your license here]
 
-## Acknowledgments
+## Credits
 
-- **Steve Rutt & Bill Etra** for creating the original video synthesizer
-- The analog video art community for keeping these techniques alive
+Digital recreation by [Your Name]
+Original Rutt/Etra designed by Steve Rutt and Bill Etra (1973)

@@ -45,6 +45,10 @@ public class RuttEtraSceneSetup : EditorWindow
         meshGen.webcamCapture = webcam;
         controller.meshGenerator = meshGen;
         
+        // Create animator
+        var animator = controllerObj.AddComponent<RuttEtraAnimator>();
+        animator.settings = settings;
+        
         // Setup camera
         Camera mainCam = Camera.main;
         if (mainCam != null)

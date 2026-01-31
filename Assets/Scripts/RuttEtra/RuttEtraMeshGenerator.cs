@@ -29,58 +29,43 @@ public class RuttEtraMeshGenerator : MonoBehaviour
     
     private Material _lineMaterial;
     
-    private int _lastHRes;
-    private int _lastVRes;
-    private int _lastScanSkip;
-    private bool _lastShowH;
-    private bool _lastShowV;
+    private int _lastHRes, _lastVRes, _lastScanSkip;
+    private bool _lastShowH, _lastShowV;
+    
+    private float _waveTime;
+    private int _frameCount;
     
     private void Awake()
     {
         _meshFilter = GetComponent<MeshFilter>();
         _meshRenderer = GetComponent<MeshRenderer>();
-        
         CreateLineMaterial();
     }
     
     private void Start()
     {
         if (webcamCapture != null)
-        {
             webcamCapture.OnFrameReady += OnWebcamFrame;
-        }
-        
         GenerateMesh();
     }
     
     private void CreateLineMaterial()
     {
-        // Use the custom line shader
         Shader lineShader = Shader.Find("RuttEtra/ScanLine");
         if (lineShader == null)
-        {
             lineShader = Shader.Find("Sprites/Default");
-            Debug.LogWarning("RuttEtra/ScanLine shader not found, using fallback");
-        }
-        
         _lineMaterial = new Material(lineShader);
         _meshRenderer.material = _lineMaterial;
     }
     
     public void GenerateMesh()
     {
-        if (settings == null)
-        {
-            Debug.LogError("RuttEtraSettings not assigned!");
-            return;
-        }
+        if (settings == null) return;
         
         int hRes = settings.horizontalResolution;
         int vRes = settings.verticalResolution;
         
-        // Cache settings for change detection
-        _lastHRes = hRes;
-        _lastVRes = vRes;
+        _lastHRes = hRes; _lastVRes = vRes;
         _lastScanSkip = settings.scanLineSkip;
         _lastShowH = settings.showHorizontalLines;
         _lastShowV = settings.showVerticalLines;
@@ -89,63 +74,58 @@ public class RuttEtraMeshGenerator : MonoBehaviour
         _mesh.name = "RuttEtra Mesh";
         _mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         
-        // Generate vertices in a grid
         int vertexCount = hRes * vRes;
         _vertices = new Vector3[vertexCount];
         _baseVertices = new Vector3[vertexCount];
         _colors = new Color[vertexCount];
         
-        float halfWidth = meshWidth / 2f;
-        float halfHeight = meshHeight / 2f;
+        float halfW = meshWidth / 2f;
+        float halfH = meshHeight / 2f;
         
         for (int y = 0; y < vRes; y++)
         {
             for (int x = 0; x < hRes; x++)
             {
-                int index = y * hRes + x;
-                float px = (x / (float)(hRes - 1)) * meshWidth - halfWidth;
-                float py = (y / (float)(vRes - 1)) * meshHeight - halfHeight;
-                
-                _baseVertices[index] = new Vector3(px, py, 0);
-                _vertices[index] = _baseVertices[index];
-                _colors[index] = settings.primaryColor;
+                int i = y * hRes + x;
+                float px = (x / (float)(hRes - 1)) * meshWidth - halfW;
+                float py = (y / (float)(vRes - 1)) * meshHeight - halfH;
+                _baseVertices[i] = new Vector3(px, py, 0);
+                _vertices[i] = _baseVertices[i];
+                _colors[i] = settings.primaryColor;
             }
         }
         
-        // Generate line indices (horizontal scan lines)
-        List<int> hIndices = new List<int>();
+        // Horizontal lines
+        List<int> hIdx = new List<int>();
         for (int y = 0; y < vRes; y += settings.scanLineSkip)
         {
             for (int x = 0; x < hRes - 1; x++)
             {
-                int index = y * hRes + x;
-                hIndices.Add(index);
-                hIndices.Add(index + 1);
+                int i = y * hRes + x;
+                hIdx.Add(i);
+                hIdx.Add(i + 1);
             }
         }
-        _horizontalIndices = hIndices.ToArray();
+        _horizontalIndices = hIdx.ToArray();
         
-        // Generate vertical line indices
-        List<int> vIndices = new List<int>();
+        // Vertical lines
+        List<int> vIdx = new List<int>();
         for (int x = 0; x < hRes; x += settings.scanLineSkip)
         {
             for (int y = 0; y < vRes - 1; y++)
             {
-                int index = y * hRes + x;
-                vIndices.Add(index);
-                vIndices.Add((y + 1) * hRes + x);
+                int i = y * hRes + x;
+                vIdx.Add(i);
+                vIdx.Add((y + 1) * hRes + x);
             }
         }
-        _verticalIndices = vIndices.ToArray();
+        _verticalIndices = vIdx.ToArray();
         
         _mesh.vertices = _vertices;
         _mesh.colors = _colors;
-        
         UpdateMeshTopology();
-        
         _meshFilter.mesh = _mesh;
         
-        // Initialize luminance buffers
         _luminanceBuffer = new float[vertexCount];
         _smoothedLuminance = new float[vertexCount];
         _pixelBuffer = new Color[hRes * vRes];
@@ -157,32 +137,32 @@ public class RuttEtraMeshGenerator : MonoBehaviour
         _mesh.vertices = _vertices;
         _mesh.colors = _colors;
         
-        // Combine indices based on settings
-        List<int> activeIndices = new List<int>();
-        if (settings.showHorizontalLines && _horizontalIndices != null)
-            activeIndices.AddRange(_horizontalIndices);
-        if (settings.showVerticalLines && _verticalIndices != null)
-            activeIndices.AddRange(_verticalIndices);
+        List<int> idx = new List<int>();
+        if (settings.showHorizontalLines && _horizontalIndices != null) idx.AddRange(_horizontalIndices);
+        if (settings.showVerticalLines && _verticalIndices != null) idx.AddRange(_verticalIndices);
         
-        if (activeIndices.Count > 0)
-        {
-            _mesh.SetIndices(activeIndices.ToArray(), MeshTopology.Lines, 0);
-        }
+        if (idx.Count > 0)
+            _mesh.SetIndices(idx.ToArray(), MeshTopology.Lines, 0);
+    }
+    
+    private void Update()
+    {
+        if (settings == null) return;
+        
+        _waveTime += Time.deltaTime * settings.waveSpeed;
+        _frameCount++;
+        
+        UpdateMaterialProperties();
     }
     
     private void OnWebcamFrame(Texture sourceTexture)
     {
         if (settings == null) return;
         
-        // Check if we need to regenerate mesh
-        if (NeedsMeshRegeneration())
-        {
-            GenerateMesh();
-        }
+        if (NeedsMeshRegeneration()) GenerateMesh();
         
         ProcessLuminance(sourceTexture);
         UpdateDisplacement();
-        UpdateMaterialProperties();
     }
     
     private bool NeedsMeshRegeneration()
@@ -199,72 +179,187 @@ public class RuttEtraMeshGenerator : MonoBehaviour
         int hRes = settings.horizontalResolution;
         int vRes = settings.verticalResolution;
         
-        // Create or resize luminance texture
-        if (_luminanceTexture == null || 
-            _luminanceTexture.width != hRes || 
-            _luminanceTexture.height != vRes)
+        if (_luminanceTexture == null || _luminanceTexture.width != hRes || _luminanceTexture.height != vRes)
         {
             if (_luminanceTexture != null) Destroy(_luminanceTexture);
             _luminanceTexture = new Texture2D(hRes, vRes, TextureFormat.RGBA32, false);
             _luminanceTexture.filterMode = FilterMode.Bilinear;
         }
         
-        // Sample source texture at mesh resolution
         RenderTexture tempRT = RenderTexture.GetTemporary(hRes, vRes, 0, RenderTextureFormat.ARGB32);
         Graphics.Blit(source, tempRT);
-        
         RenderTexture.active = tempRT;
         _luminanceTexture.ReadPixels(new Rect(0, 0, hRes, vRes), 0, 0);
         _luminanceTexture.Apply();
         RenderTexture.active = null;
         RenderTexture.ReleaseTemporary(tempRT);
         
-        // Extract luminance values
         _pixelBuffer = _luminanceTexture.GetPixels();
+        
+        float brightness = settings.brightness;
+        float contrast = settings.contrast;
+        float threshold = settings.threshold;
+        float gamma = settings.gamma;
+        int posterize = settings.posterize;
+        bool edge = settings.edgeDetect;
         
         for (int i = 0; i < _pixelBuffer.Length && i < _smoothedLuminance.Length; i++)
         {
             Color c = _pixelBuffer[i];
-            // Standard luminance calculation
             float lum = 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
             
-            if (settings.invertDisplacement)
-                lum = 1f - lum;
+            // Edge detection
+            if (edge && i > hRes && i < _pixelBuffer.Length - hRes)
+            {
+                float left = i > 0 ? GetLum(_pixelBuffer[i - 1]) : lum;
+                float right = i < _pixelBuffer.Length - 1 ? GetLum(_pixelBuffer[i + 1]) : lum;
+                float up = GetLum(_pixelBuffer[i - hRes]);
+                float down = GetLum(_pixelBuffer[i + hRes]);
+                lum = Mathf.Abs(lum - left) + Mathf.Abs(lum - right) + Mathf.Abs(lum - up) + Mathf.Abs(lum - down);
+                lum = Mathf.Clamp01(lum * 2f);
+            }
             
-            // Smooth luminance over time
-            _smoothedLuminance[i] = Mathf.Lerp(_smoothedLuminance[i], lum, 
-                1f - settings.displacementSmoothing);
-            _luminanceBuffer[i] = _smoothedLuminance[i];
+            // Input processing
+            lum = (lum + brightness) * contrast;
+            lum = Mathf.Pow(Mathf.Clamp01(lum), gamma);
+            lum = lum > threshold ? lum : 0f;
+            
+            // Posterize
+            if (posterize > 1)
+                lum = Mathf.Floor(lum * posterize) / (posterize - 1);
+            
+            lum = Mathf.Clamp01(lum);
+            if (settings.invertDisplacement) lum = 1f - lum;
+            
+            // Temporal smoothing
+            float smooth = 1f - settings.displacementSmoothing;
+            _smoothedLuminance[i] = Mathf.Lerp(_smoothedLuminance[i], lum, smooth);
+            
+            // Persistence
+            if (settings.persistence > 0)
+                _luminanceBuffer[i] = Mathf.Max(_smoothedLuminance[i], _luminanceBuffer[i] * settings.persistence);
+            else
+                _luminanceBuffer[i] = _smoothedLuminance[i];
         }
     }
+    
+    float GetLum(Color c) => 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
     
     private void UpdateDisplacement()
     {
         if (_vertices == null || _baseVertices == null) return;
         
         float strength = settings.displacementStrength;
-        bool useSourceCol = settings.useSourceColor;
-        Color primColor = settings.primaryColor;
-        Color secColor = settings.secondaryColor;
+        float offset = settings.displacementOffset;
+        float waveH = settings.horizontalWave;
+        float waveV = settings.verticalWave;
+        float waveFreq = settings.waveFrequency;
+        float zMod = settings.zModulation;
+        float zModFreq = settings.zModFrequency;
+        float keystoneH = settings.keystoneH;
+        float keystoneV = settings.keystoneV;
+        float barrel = settings.barrelDistortion;
+        float taper = settings.lineTaper;
+        bool useSource = settings.useSourceColor;
+        Color prim = settings.primaryColor;
+        Color sec = settings.secondaryColor;
         float blend = settings.colorBlend;
+        bool interlace = settings.interlace;
+        
+        // Raster position offset (applied to vertices directly)
+        float hPosOffset = settings.horizontalPosition;
+        float vPosOffset = settings.verticalPosition;
+        
+        // Raster scale
+        float hScale = settings.horizontalScale;
+        float vScale = settings.verticalScale;
+        float meshScl = settings.meshScale;
+        
+        // Raster rotation
+        Quaternion rot = Quaternion.Euler(settings.rotationX, settings.rotationY, settings.rotationZ);
+        
+        float flicker = 1f;
+        if (settings.scanlineFlicker > 0)
+            flicker = 1f - (Random.value * settings.scanlineFlicker * 0.5f);
+        
+        int hRes = settings.horizontalResolution;
+        int vRes = settings.verticalResolution;
         
         for (int i = 0; i < _vertices.Length; i++)
         {
+            int x = i % hRes;
+            int y = i / hRes;
+            float nx = x / (float)(hRes - 1);  // 0-1
+            float ny = y / (float)(vRes - 1);  // 0-1
+            float cx = nx - 0.5f;  // -0.5 to 0.5
+            float cy = ny - 0.5f;
+            
+            // Interlace
+            if (interlace && (y + _frameCount) % 2 == 0)
+            {
+                _colors[i] = Color.clear;
+                continue;
+            }
+            
             float lum = i < _luminanceBuffer.Length ? _luminanceBuffer[i] : 0f;
+            Vector3 pos = _baseVertices[i];
             
-            // Apply displacement along Z axis
-            _vertices[i] = _baseVertices[i] + Vector3.forward * (lum * strength);
-            
-            // Calculate color
-            if (useSourceCol && _pixelBuffer != null && i < _pixelBuffer.Length)
+            // Barrel/Pincushion distortion
+            if (Mathf.Abs(barrel) > 0.001f)
             {
-                _colors[i] = _pixelBuffer[i];
+                float r2 = cx * cx + cy * cy;
+                float distort = 1f + barrel * r2 * 4f;
+                pos.x = cx * distort * meshWidth;
+                pos.y = cy * distort * meshHeight;
             }
+            
+            // Keystone distortion
+            if (Mathf.Abs(keystoneH) > 0.001f)
+                pos.x *= 1f + keystoneH * cy * 2f;
+            if (Mathf.Abs(keystoneV) > 0.001f)
+                pos.y *= 1f + keystoneV * cx * 2f;
+            
+            // Wave deflection
+            if (waveH > 0)
+                pos.x += Mathf.Sin((ny * waveFreq * Mathf.PI * 2f) + _waveTime) * waveH;
+            if (waveV > 0)
+                pos.y += Mathf.Sin((nx * waveFreq * Mathf.PI * 2f) + _waveTime) * waveV;
+            
+            // Z displacement
+            float z = (lum + offset) * strength * flicker;
+            
+            // Z modulation
+            if (zMod > 0)
+                z += Mathf.Sin(_waveTime * zModFreq * Mathf.PI * 2f) * zMod;
+            
+            // Taper
+            if (taper > 0)
+            {
+                float edge = 1f - (Mathf.Abs(cx) * 2f * taper);
+                z *= Mathf.Clamp01(edge);
+            }
+            
+            pos.z = z;
+            
+            // Apply scale
+            pos.x *= hScale * meshScl;
+            pos.y *= vScale * meshScl;
+            pos.z *= meshScl;
+            
+            // Apply rotation
+            pos = rot * pos;
+            
+            // Apply position offset
+            pos.x += hPosOffset;
+            pos.y += vPosOffset;
+            
+            _vertices[i] = pos;
+            
+            // Color
+            if (useSource && _pixelBuffer != null && i < _pixelBuffer.Length)
+                _colors[i] = _pixelBuffer[i] * flicker;
             else
-            {
-                // Blend between primary and secondary based on luminance
-                _colors[i] = Color.Lerp(primColor, secColor, lum * blend);
-            }
+                _colors[i] = Color.Lerp(prim, sec, lum * blend) * flicker;
         }
         
         _mesh.vertices = _vertices;
@@ -279,24 +374,17 @@ public class RuttEtraMeshGenerator : MonoBehaviour
         _lineMaterial.SetFloat("_LineWidth", settings.lineWidth);
         _lineMaterial.SetFloat("_GlowIntensity", settings.glowIntensity);
         _lineMaterial.SetFloat("_NoiseAmount", settings.noiseAmount);
+        _lineMaterial.SetFloat("_LineTaper", settings.lineTaper);
+        _lineMaterial.SetFloat("_Bloom", settings.bloom);
     }
     
-    public void RefreshMesh()
-    {
-        GenerateMesh();
-    }
+    public void RefreshMesh() => GenerateMesh();
     
     private void OnDestroy()
     {
-        if (webcamCapture != null)
-            webcamCapture.OnFrameReady -= OnWebcamFrame;
-        
-        if (_mesh != null) Destroy(_mesh);
-        if (_luminanceTexture != null) Destroy(_luminanceTexture);
-        if (_lineMaterial != null) Destroy(_lineMaterial);
+        if (webcamCapture != null) webcamCapture.OnFrameReady -= OnWebcamFrame;
+        if (_mesh) Destroy(_mesh);
+        if (_luminanceTexture) Destroy(_luminanceTexture);
+        if (_lineMaterial) Destroy(_lineMaterial);
     }
 }
-
-
-
-
