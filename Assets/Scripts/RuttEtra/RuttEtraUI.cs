@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using TMPro;
+using System.Collections.Generic;
 
 public class RuttEtraUI : MonoBehaviour
 {
@@ -10,6 +11,15 @@ public class RuttEtraUI : MonoBehaviour
     public RuttEtraSettings settings;
     public WebcamCapture webcamCapture;
     public RuttEtraAnimator animator;
+    
+    [Header("New Feature References")]
+    public AudioReactive audioReactive;
+    public AnalogEffects analogEffects;
+    public FeedbackEffect feedbackEffect;
+    public PresetManager presetManager;
+    public VideoRecorder videoRecorder;
+    public OSCReceiver oscReceiver;
+    public MIDIInput midiInput;
     
     [Header("UI Panels")]
     public GameObject controlPanel;
@@ -80,7 +90,7 @@ public class RuttEtraUI : MonoBehaviour
     public Slider verticalResSlider;
     public TMP_Text resolutionText;
     
-    [Header("Feedback")]
+    [Header("Feedback (Settings)")]
     public Slider feedbackSlider;
     public Slider feedbackZoomSlider;
     public Slider feedbackRotSlider;
@@ -113,29 +123,142 @@ public class RuttEtraUI : MonoBehaviour
     public Toggle animDistortToggle;
     public Slider animDistortSpeedSlider;
     
+    // ====== NEW FEATURE UI ELEMENTS ======
+    
+    [Header("Audio Reactive")]
+    public Toggle audioEnableToggle;
+    public TMP_Dropdown audioDeviceDropdown;
+    public Slider audioGainSlider;
+    public Slider audioSmoothingSlider;
+    public Toggle audioDisplacementToggle;
+    public Slider audioDisplacementAmountSlider;
+    public Toggle audioWaveToggle;
+    public Slider audioWaveAmountSlider;
+    public Toggle audioHueToggle;
+    public Slider audioHueAmountSlider;
+    public Toggle audioScaleToggle;
+    public Slider audioScaleAmountSlider;
+    public Toggle audioRotationToggle;
+    public Slider audioRotationAmountSlider;
+    public Toggle audioGlowToggle;
+    public Slider audioGlowAmountSlider;
+    public Toggle audioBeatFlashToggle;
+    public Toggle audioBeatPulseToggle;
+    public Slider audioBeatIntensitySlider;
+    public TMP_Text audioLevelText;
+    
+    [Header("Analog Effects - CRT")]
+    public Toggle crtEnableToggle;
+    public Slider crtScanlineSlider;
+    public Slider crtPhosphorSlider;
+    public Slider crtCurvatureSlider;
+    public Slider crtVignetteSlider;
+    
+    [Header("Analog Effects - VHS")]
+    public Toggle vhsEnableToggle;
+    public Slider vhsTrackingSlider;
+    public Slider vhsColorBleedSlider;
+    public Slider vhsTapeNoiseSlider;
+    public Slider vhsJitterSlider;
+    
+    [Header("Analog Effects - Other")]
+    public Toggle chromaticEnableToggle;
+    public Slider chromaticAmountSlider;
+    public Toggle holdDriftEnableToggle;
+    public Slider holdHorizontalSlider;
+    public Slider holdVerticalSlider;
+    public Toggle signalNoiseEnableToggle;
+    public Slider staticNoiseSlider;
+    public Slider snowAmountSlider;
+    public Slider analogSaturationSlider;
+    public Slider analogHueShiftSlider;
+    public Slider analogGammaSlider;
+    
+    [Header("Visual Feedback Effect")]
+    public Toggle feedbackEffectEnableToggle;
+    public Slider feedbackEffectAmountSlider;
+    public Slider feedbackEffectZoomSlider;
+    public Slider feedbackEffectRotationSlider;
+    public Slider feedbackEffectOffsetXSlider;
+    public Slider feedbackEffectOffsetYSlider;
+    public Slider feedbackHueShiftSlider;
+    public Slider feedbackSaturationSlider;
+    public Slider feedbackBrightnessSlider;
+    public Button feedbackClearButton;
+    
+    [Header("Presets")]
+    public TMP_Dropdown presetDropdown;
+    public Button presetSaveButton;
+    public Button presetNextButton;
+    public Button presetPrevButton;
+    public Button presetRandomButton;
+    public Toggle presetMorphToggle;
+    public Slider presetMorphDurationSlider;
+    public TMP_Text presetNameText;
+    
+    [Header("Recording")]
+    public Toggle recordingToggle;
+    public Button screenshotButton;
+    public TMP_Text recordingStatusText;
+    public Slider recordingFPSSlider;
+    
+    [Header("OSC")]
+    public Toggle oscEnableToggle;
+    public TMP_Text oscStatusText;
+    public Toggle oscLogToggle;
+    
+    [Header("MIDI")]
+    public Toggle midiEnableToggle;
+    public Toggle midiLearnToggle;
+    public TMP_Text midiStatusText;
+    
     private bool _panelVisible = true;
     
     private void Start()
     {
+        FindReferences();
         InitializeUI();
         InitializeAnimator();
+        InitializeNewFeatures();
         BindEvents();
+        BindNewFeatureEvents();
+        
+        Debug.Log("RuttEtraUI initialized. Settings: " + (settings != null ? "OK" : "NULL") + 
+                  ", Controller: " + (controller != null ? "OK" : "NULL") +
+                  ", AudioReactive: " + (audioReactive != null ? "OK" : "NULL"));
+    }
+    
+    private void FindReferences()
+    {
+        // Find core references
+        if (controller == null) controller = FindFirstObjectByType<RuttEtraController>();
+        if (controller != null && settings == null) settings = controller.settings;
+        if (webcamCapture == null) webcamCapture = FindFirstObjectByType<WebcamCapture>();
+        if (animator == null) animator = FindFirstObjectByType<RuttEtraAnimator>();
+        
+        // Auto-find new feature components
+        if (audioReactive == null) audioReactive = FindFirstObjectByType<AudioReactive>();
+        if (analogEffects == null) analogEffects = FindFirstObjectByType<AnalogEffects>();
+        if (feedbackEffect == null) feedbackEffect = FindFirstObjectByType<FeedbackEffect>();
+        if (presetManager == null) presetManager = FindFirstObjectByType<PresetManager>();
+        if (videoRecorder == null) videoRecorder = FindFirstObjectByType<VideoRecorder>();
+        if (oscReceiver == null) oscReceiver = FindFirstObjectByType<OSCReceiver>();
+        if (midiInput == null) midiInput = FindFirstObjectByType<MIDIInput>();
     }
     
     private void InitializeAnimator()
     {
-        // Auto-find animator if not assigned
-        if (animator == null)
-            animator = FindFirstObjectByType<RuttEtraAnimator>();
-        
         if (animator == null) return;
-        
         animator.CaptureBaseValues();
     }
     
     private void InitializeUI()
     {
-        if (settings == null) return;
+        if (settings == null) 
+        {
+            Debug.LogWarning("RuttEtraUI: Settings is null, cannot initialize UI");
+            return;
+        }
         
         // Input Signal
         Set(brightnessSlider, settings.brightness);
@@ -223,11 +346,124 @@ public class RuttEtraUI : MonoBehaviour
         }
     }
     
-    void Set(Slider s, float v) { if (s) s.value = v; }
-    void Set(Toggle t, bool v) { if (t) t.isOn = v; }
+    private void InitializeNewFeatures()
+    {
+        // Audio Reactive
+        if (audioReactive != null)
+        {
+            Set(audioEnableToggle, audioReactive.enableAudio);
+            Set(audioGainSlider, audioReactive.inputGain);
+            Set(audioSmoothingSlider, audioReactive.smoothing);
+            Set(audioDisplacementToggle, audioReactive.modulateDisplacement);
+            Set(audioDisplacementAmountSlider, audioReactive.displacementAmount);
+            Set(audioWaveToggle, audioReactive.modulateWave);
+            Set(audioWaveAmountSlider, audioReactive.waveAmount);
+            Set(audioHueToggle, audioReactive.modulateHue);
+            Set(audioHueAmountSlider, audioReactive.hueAmount);
+            Set(audioScaleToggle, audioReactive.modulateScale);
+            Set(audioScaleAmountSlider, audioReactive.scaleAmount);
+            Set(audioRotationToggle, audioReactive.modulateRotation);
+            Set(audioRotationAmountSlider, audioReactive.rotationAmount);
+            Set(audioGlowToggle, audioReactive.modulateGlow);
+            Set(audioGlowAmountSlider, audioReactive.glowAmount);
+            Set(audioBeatFlashToggle, audioReactive.flashOnBeat);
+            Set(audioBeatPulseToggle, audioReactive.pulseOnBeat);
+            Set(audioBeatIntensitySlider, audioReactive.beatIntensity);
+            
+            // Audio device dropdown
+            UpdateAudioDeviceDropdown();
+            audioReactive.OnDevicesChanged += _ => UpdateAudioDeviceDropdown();
+        }
+        
+        // Analog Effects
+        if (analogEffects != null)
+        {
+            // CRT
+            Set(crtEnableToggle, analogEffects.enableCRT);
+            Set(crtScanlineSlider, analogEffects.scanlineIntensity);
+            Set(crtPhosphorSlider, analogEffects.phosphorGlow);
+            Set(crtCurvatureSlider, analogEffects.screenCurvature);
+            Set(crtVignetteSlider, analogEffects.vignette);
+            
+            // VHS
+            Set(vhsEnableToggle, analogEffects.enableVHS);
+            Set(vhsTrackingSlider, analogEffects.trackingNoise);
+            Set(vhsColorBleedSlider, analogEffects.colorBleed);
+            Set(vhsTapeNoiseSlider, analogEffects.tapeNoise);
+            Set(vhsJitterSlider, analogEffects.horizontalJitter);
+            
+            // Other
+            Set(chromaticEnableToggle, analogEffects.enableChromatic);
+            Set(chromaticAmountSlider, analogEffects.chromaticAmount);
+            Set(holdDriftEnableToggle, analogEffects.enableHoldDrift);
+            Set(holdHorizontalSlider, analogEffects.horizontalHold);
+            Set(holdVerticalSlider, analogEffects.verticalHold);
+            Set(signalNoiseEnableToggle, analogEffects.enableSignalNoise);
+            Set(staticNoiseSlider, analogEffects.staticNoise);
+            Set(snowAmountSlider, analogEffects.snowAmount);
+            Set(analogSaturationSlider, analogEffects.saturation);
+            Set(analogHueShiftSlider, analogEffects.hueShift);
+            Set(analogGammaSlider, analogEffects.gamma);
+        }
+        
+        // Feedback Effect
+        if (feedbackEffect != null)
+        {
+            Set(feedbackEffectEnableToggle, feedbackEffect.enableFeedback);
+            Set(feedbackEffectAmountSlider, feedbackEffect.feedbackAmount);
+            Set(feedbackEffectZoomSlider, feedbackEffect.feedbackZoom);
+            Set(feedbackEffectRotationSlider, feedbackEffect.feedbackRotation);
+            Set(feedbackEffectOffsetXSlider, feedbackEffect.feedbackOffsetX);
+            Set(feedbackEffectOffsetYSlider, feedbackEffect.feedbackOffsetY);
+            Set(feedbackHueShiftSlider, feedbackEffect.feedbackHueShift);
+            Set(feedbackSaturationSlider, feedbackEffect.feedbackSaturation);
+            Set(feedbackBrightnessSlider, feedbackEffect.feedbackBrightness);
+        }
+        
+        // Presets
+        if (presetManager != null)
+        {
+            Set(presetMorphToggle, true);
+            Set(presetMorphDurationSlider, presetManager.morphDuration);
+            UpdatePresetDropdown();
+            
+            presetManager.OnPresetLoaded += OnPresetLoaded;
+            presetManager.OnPresetSaved += _ => UpdatePresetDropdown();
+        }
+        
+        // Recording
+        if (videoRecorder != null)
+        {
+            Set(recordingToggle, videoRecorder.isRecording);
+            Set(recordingFPSSlider, videoRecorder.targetFPS);
+            
+            videoRecorder.OnRecordingStarted += () => UpdateRecordingStatus(true);
+            videoRecorder.OnRecordingStopped += _ => UpdateRecordingStatus(false);
+        }
+        
+        // OSC
+        if (oscReceiver != null)
+        {
+            Set(oscEnableToggle, oscReceiver.enableOSC);
+            Set(oscLogToggle, oscReceiver.logMessages);
+            UpdateOSCStatus();
+        }
+        
+        // MIDI
+        if (midiInput != null)
+        {
+            Set(midiEnableToggle, midiInput.enableMIDI);
+            Set(midiLearnToggle, midiInput.learnMode);
+        }
+    }
+    
+    void Set(Slider s, float v) { if (s) s.SetValueWithoutNotify(v); }
+    void Set(Toggle t, bool v) { if (t) t.SetIsOnWithoutNotify(v); }
     
     private void BindEvents()
     {
+        if (settings == null) return;
+        
         // Input Signal
         Bind(brightnessSlider, v => settings.brightness = v);
         Bind(contrastSlider, v => settings.contrast = v);
@@ -311,19 +547,130 @@ public class RuttEtraUI : MonoBehaviour
         resetCameraButton?.onClick.AddListener(ResetCamera);
         resetAllButton?.onClick.AddListener(ResetAll);
         
-        // Animation - use simplified API
-        Bind(animRotationToggle, v => { if (animator) animator.SetAutoRotate(v); });
-        Bind(animRotationSpeedSlider, v => { if (animator) animator.SetRotateSpeed(v); });
-        Bind(animHueToggle, v => { if (animator) animator.SetHueCycle(v); });
-        Bind(animHueSpeedSlider, v => { if (animator) animator.SetHueSpeed(v); });
-        Bind(animWaveToggle, v => { if (animator) animator.SetWaveAnimate(v); });
-        Bind(animWaveSpeedSlider, v => { if (animator) animator.SetWaveAnimSpeed(v); });
-        Bind(animZToggle, v => { if (animator) animator.SetZPulse(v); });
-        Bind(animZSpeedSlider, v => { if (animator) animator.SetZPulseSpeed(v); });
-        Bind(animScaleToggle, v => { if (animator) animator.SetBreathe(v); });
-        Bind(animScaleSpeedSlider, v => { if (animator) animator.SetBreatheSpeed(v); });
-        Bind(animDistortToggle, v => { if (animator) animator.SetDistortAnimate(v); });
-        Bind(animDistortSpeedSlider, v => { if (animator) animator.SetDistortSpeed(v); });
+        // Animation
+        if (animator != null)
+        {
+            Bind(animRotationToggle, v => animator.SetAutoRotate(v));
+            Bind(animRotationSpeedSlider, v => animator.SetRotateSpeed(v));
+            Bind(animHueToggle, v => animator.SetHueCycle(v));
+            Bind(animHueSpeedSlider, v => animator.SetHueSpeed(v));
+            Bind(animWaveToggle, v => animator.SetWaveAnimate(v));
+            Bind(animWaveSpeedSlider, v => animator.SetWaveAnimSpeed(v));
+            Bind(animZToggle, v => animator.SetZPulse(v));
+            Bind(animZSpeedSlider, v => animator.SetZPulseSpeed(v));
+            Bind(animScaleToggle, v => animator.SetBreathe(v));
+            Bind(animScaleSpeedSlider, v => animator.SetBreatheSpeed(v));
+            Bind(animDistortToggle, v => animator.SetDistortAnimate(v));
+            Bind(animDistortSpeedSlider, v => animator.SetDistortSpeed(v));
+        }
+    }
+    
+    private void BindNewFeatureEvents()
+    {
+        // ===== AUDIO REACTIVE =====
+        if (audioReactive != null)
+        {
+            Bind(audioEnableToggle, v => audioReactive.SetEnabled(v));
+            Bind(audioGainSlider, v => audioReactive.inputGain = v);
+            Bind(audioSmoothingSlider, v => audioReactive.smoothing = v);
+            Bind(audioDisplacementToggle, v => { audioReactive.modulateDisplacement = v; audioReactive.RecaptureBaseValues(); });
+            Bind(audioDisplacementAmountSlider, v => audioReactive.displacementAmount = v);
+            Bind(audioWaveToggle, v => { audioReactive.modulateWave = v; audioReactive.RecaptureBaseValues(); });
+            Bind(audioWaveAmountSlider, v => audioReactive.waveAmount = v);
+            Bind(audioHueToggle, v => { audioReactive.modulateHue = v; audioReactive.RecaptureBaseValues(); });
+            Bind(audioHueAmountSlider, v => audioReactive.hueAmount = v);
+            Bind(audioScaleToggle, v => { audioReactive.modulateScale = v; audioReactive.RecaptureBaseValues(); });
+            Bind(audioScaleAmountSlider, v => audioReactive.scaleAmount = v);
+            Bind(audioRotationToggle, v => { audioReactive.modulateRotation = v; audioReactive.RecaptureBaseValues(); });
+            Bind(audioRotationAmountSlider, v => audioReactive.rotationAmount = v);
+            Bind(audioGlowToggle, v => { audioReactive.modulateGlow = v; audioReactive.RecaptureBaseValues(); });
+            Bind(audioGlowAmountSlider, v => audioReactive.glowAmount = v);
+            Bind(audioBeatFlashToggle, v => audioReactive.flashOnBeat = v);
+            Bind(audioBeatPulseToggle, v => audioReactive.pulseOnBeat = v);
+            Bind(audioBeatIntensitySlider, v => audioReactive.beatIntensity = v);
+            
+            // Audio device dropdown
+            audioDeviceDropdown?.onValueChanged.AddListener(i => audioReactive.SelectDevice(i));
+        }
+        
+        // ===== ANALOG EFFECTS =====
+        if (analogEffects != null)
+        {
+            // CRT
+            Bind(crtEnableToggle, v => analogEffects.enableCRT = v);
+            Bind(crtScanlineSlider, v => analogEffects.scanlineIntensity = v);
+            Bind(crtPhosphorSlider, v => analogEffects.phosphorGlow = v);
+            Bind(crtCurvatureSlider, v => analogEffects.screenCurvature = v);
+            Bind(crtVignetteSlider, v => analogEffects.vignette = v);
+            
+            // VHS
+            Bind(vhsEnableToggle, v => analogEffects.enableVHS = v);
+            Bind(vhsTrackingSlider, v => analogEffects.trackingNoise = v);
+            Bind(vhsColorBleedSlider, v => analogEffects.colorBleed = v);
+            Bind(vhsTapeNoiseSlider, v => analogEffects.tapeNoise = v);
+            Bind(vhsJitterSlider, v => analogEffects.horizontalJitter = v);
+            
+            // Other
+            Bind(chromaticEnableToggle, v => analogEffects.enableChromatic = v);
+            Bind(chromaticAmountSlider, v => analogEffects.chromaticAmount = v);
+            Bind(holdDriftEnableToggle, v => analogEffects.enableHoldDrift = v);
+            Bind(holdHorizontalSlider, v => analogEffects.horizontalHold = v);
+            Bind(holdVerticalSlider, v => analogEffects.verticalHold = v);
+            Bind(signalNoiseEnableToggle, v => analogEffects.enableSignalNoise = v);
+            Bind(staticNoiseSlider, v => analogEffects.staticNoise = v);
+            Bind(snowAmountSlider, v => analogEffects.snowAmount = v);
+            Bind(analogSaturationSlider, v => analogEffects.saturation = v);
+            Bind(analogHueShiftSlider, v => analogEffects.hueShift = v);
+            Bind(analogGammaSlider, v => analogEffects.gamma = v);
+        }
+        
+        // ===== FEEDBACK EFFECT =====
+        if (feedbackEffect != null)
+        {
+            Bind(feedbackEffectEnableToggle, v => feedbackEffect.enableFeedback = v);
+            Bind(feedbackEffectAmountSlider, v => feedbackEffect.feedbackAmount = v);
+            Bind(feedbackEffectZoomSlider, v => feedbackEffect.feedbackZoom = v);
+            Bind(feedbackEffectRotationSlider, v => feedbackEffect.feedbackRotation = v);
+            Bind(feedbackEffectOffsetXSlider, v => feedbackEffect.feedbackOffsetX = v);
+            Bind(feedbackEffectOffsetYSlider, v => feedbackEffect.feedbackOffsetY = v);
+            Bind(feedbackHueShiftSlider, v => feedbackEffect.feedbackHueShift = v);
+            Bind(feedbackSaturationSlider, v => feedbackEffect.feedbackSaturation = v);
+            Bind(feedbackBrightnessSlider, v => feedbackEffect.feedbackBrightness = v);
+            feedbackClearButton?.onClick.AddListener(() => feedbackEffect.ClearFeedback());
+        }
+        
+        // ===== PRESETS =====
+        if (presetManager != null)
+        {
+            presetDropdown?.onValueChanged.AddListener(i => { if (i >= 0 && i < presetManager.presets.Count) presetManager.LoadPresetByIndex(i, presetMorphToggle?.isOn ?? true); });
+            presetSaveButton?.onClick.AddListener(() => { presetManager.SaveCurrentAsPreset($"Preset_{System.DateTime.Now:HHmmss}"); UpdatePresetDropdown(); });
+            presetNextButton?.onClick.AddListener(() => presetManager.NextPreset(presetMorphToggle?.isOn ?? true));
+            presetPrevButton?.onClick.AddListener(() => presetManager.PreviousPreset(presetMorphToggle?.isOn ?? true));
+            presetRandomButton?.onClick.AddListener(() => presetManager.RandomPreset(presetMorphToggle?.isOn ?? true));
+            Bind(presetMorphDurationSlider, v => presetManager.morphDuration = v);
+        }
+        
+        // ===== RECORDING =====
+        if (videoRecorder != null)
+        {
+            Bind(recordingToggle, v => { if (v) videoRecorder.StartRecording(); else videoRecorder.StopRecording(); });
+            screenshotButton?.onClick.AddListener(() => videoRecorder.TakeScreenshot());
+            Bind(recordingFPSSlider, v => videoRecorder.targetFPS = Mathf.RoundToInt(v));
+        }
+        
+        // ===== OSC =====
+        if (oscReceiver != null)
+        {
+            Bind(oscEnableToggle, v => { oscReceiver.enableOSC = v; if (v) oscReceiver.StartListening(); else oscReceiver.StopListening(); UpdateOSCStatus(); });
+            Bind(oscLogToggle, v => oscReceiver.logMessages = v);
+        }
+        
+        // ===== MIDI =====
+        if (midiInput != null)
+        {
+            Bind(midiEnableToggle, v => midiInput.enableMIDI = v);
+            Bind(midiLearnToggle, v => midiInput.learnMode = v);
+        }
     }
     
     void Bind(Slider s, System.Action<float> a) { s?.onValueChanged.AddListener(v => a(v)); }
@@ -332,6 +679,7 @@ public class RuttEtraUI : MonoBehaviour
     
     void UpdatePrimaryColor()
     {
+        if (settings == null) return;
         float h = primaryHueSlider ? primaryHueSlider.value : 0;
         float s = primarySatSlider ? primarySatSlider.value : 1;
         settings.primaryColor = Color.HSVToRGB(h, s, 1f);
@@ -339,6 +687,7 @@ public class RuttEtraUI : MonoBehaviour
     
     void UpdateSecondaryColor()
     {
+        if (settings == null) return;
         float h = secondaryHueSlider ? secondaryHueSlider.value : 0;
         float s = secondarySatSlider ? secondarySatSlider.value : 1;
         settings.secondaryColor = Color.HSVToRGB(h, s, 1f);
@@ -352,12 +701,80 @@ public class RuttEtraUI : MonoBehaviour
             _panelVisible = !_panelVisible;
             controlPanel?.SetActive(_panelVisible);
         }
+        
+        // Update audio level display
+        if (audioReactive != null && audioLevelText != null)
+        {
+            audioLevelText.text = $"B:{audioReactive.bass:F2} M:{audioReactive.mid:F2} T:{audioReactive.treble:F2}";
+        }
+        
+        // Update recording status
+        if (videoRecorder != null && recordingStatusText != null && videoRecorder.isRecording)
+        {
+            recordingStatusText.text = $"REC {videoRecorder.GetRecordingDuration():F1}s ({videoRecorder.GetFrameCount()} frames)";
+        }
     }
     
     void UpdateResolutionText()
     {
         if (resolutionText && settings)
             resolutionText.text = $"{settings.horizontalResolution} x {settings.verticalResolution}";
+    }
+    
+    void UpdateAudioDeviceDropdown()
+    {
+        if (audioDeviceDropdown == null || audioReactive == null) return;
+        
+        audioDeviceDropdown.ClearOptions();
+        var devices = audioReactive.GetDeviceList();
+        audioDeviceDropdown.AddOptions(devices);
+        
+        if (audioReactive.selectedDeviceIndex < devices.Count)
+        {
+            audioDeviceDropdown.SetValueWithoutNotify(audioReactive.selectedDeviceIndex);
+        }
+    }
+    
+    void UpdatePresetDropdown()
+    {
+        if (presetDropdown == null || presetManager == null) return;
+        
+        presetDropdown.ClearOptions();
+        var options = new List<string>();
+        foreach (var preset in presetManager.presets)
+        {
+            options.Add(preset.name);
+        }
+        if (options.Count == 0)
+        {
+            options.Add("No presets");
+        }
+        presetDropdown.AddOptions(options);
+        
+        if (presetManager.currentPresetIndex >= 0 && presetManager.currentPresetIndex < options.Count)
+            presetDropdown.SetValueWithoutNotify(presetManager.currentPresetIndex);
+    }
+    
+    void OnPresetLoaded(PresetManager.Preset preset)
+    {
+        if (presetNameText != null) presetNameText.text = preset.name;
+        if (presetDropdown != null && presetManager != null) 
+            presetDropdown.SetValueWithoutNotify(presetManager.currentPresetIndex);
+        InitializeUI(); // Refresh all UI values
+    }
+    
+    void UpdateRecordingStatus(bool isRecording)
+    {
+        if (recordingToggle != null) recordingToggle.SetIsOnWithoutNotify(isRecording);
+        if (recordingStatusText != null) recordingStatusText.text = isRecording ? "Recording..." : "Ready";
+    }
+    
+    void UpdateOSCStatus()
+    {
+        if (oscStatusText != null && oscReceiver != null)
+        {
+            oscStatusText.text = oscReceiver.enableOSC ? $"Listening on port {oscReceiver.listenPort}" : "Disabled";
+        }
     }
     
     public void ResetCamera()
@@ -391,6 +808,12 @@ public class RuttEtraUI : MonoBehaviour
         settings.noiseAmount = 0; settings.persistence = 0; settings.scanlineFlicker = 0; settings.bloom = 0;
         
         if (webcamCapture) { webcamCapture.mirrorHorizontal = true; webcamCapture.mirrorVertical = false; }
+        
+        // Reset feedback effect
+        feedbackEffect?.ClearFeedback();
+        
+        // Recapture audio base values
+        audioReactive?.RecaptureBaseValues();
         
         InitializeUI();
         Refresh();
