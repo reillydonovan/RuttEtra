@@ -129,6 +129,20 @@ public class AudioReactive : MonoBehaviour
             if (controller) settings = controller.settings;
         }
         
+        // Log all available audio input devices
+        Debug.Log($"[AudioReactive] Found {Microphone.devices.Length} audio input device(s):");
+        for (int i = 0; i < Microphone.devices.Length; i++)
+        {
+            string device = Microphone.devices[i];
+            Microphone.GetDeviceCaps(device, out int minFreq, out int maxFreq);
+            Debug.Log($"  [{i}] {device} (freq: {minFreq}-{maxFreq} Hz)");
+        }
+        
+        if (Microphone.devices.Length == 0)
+        {
+            Debug.LogWarning("[AudioReactive] No microphone devices found! Check Windows sound settings.");
+        }
+        
         RefreshDevices();
         
         if (enableAudio && Microphone.devices.Length > 0)
@@ -270,7 +284,9 @@ public class AudioReactive : MonoBehaviour
         _audioSource.Play();
         _audioSource.volume = 0; // Mute playback, we just want the data
         
-        Debug.Log($"Started microphone: {device}");
+        Debug.Log($"[AudioReactive] Started microphone: {device}");
+        Debug.Log($"[AudioReactive] AudioSource playing: {_audioSource.isPlaying}, Clip: {(_micClip != null ? _micClip.name : "null")}, Sample Rate: {AudioSettings.outputSampleRate}");
+        Debug.Log($"[AudioReactive] Tip: If levels stay at 0, check Windows Sound Settings > Recording devices to ensure microphone is working");
     }
     
     public void StopMicrophone()
@@ -292,6 +308,7 @@ public class AudioReactive : MonoBehaviour
     public void SetEnabled(bool enabled)
     {
         enableAudio = enabled;
+        Debug.Log($"[AudioReactive] SetEnabled({enabled})");
         if (enabled)
         {
             StartMicrophone();
@@ -302,6 +319,8 @@ public class AudioReactive : MonoBehaviour
         }
     }
     
+    private float _debugTimer;
+    
     private void Update()
     {
         // Periodically check for device changes
@@ -310,13 +329,34 @@ public class AudioReactive : MonoBehaviour
             RefreshDevices();
         }
         
-        if (!enableAudio || _audioSource == null || !_audioSource.isPlaying) return;
+        if (!enableAudio) return;
+        
+        if (_audioSource == null)
+        {
+            if (Time.frameCount % 300 == 0) Debug.LogWarning("[AudioReactive] AudioSource is null!");
+            return;
+        }
+        
+        if (!_audioSource.isPlaying)
+        {
+            if (Time.frameCount % 300 == 0) Debug.LogWarning("[AudioReactive] AudioSource is not playing - trying to restart microphone");
+            StartMicrophone();
+            return;
+        }
         
         CaptureBaseValues();
         AnalyzeAudio();
         DetectBeat();
         UpdateBeatPulse();
         ApplyModulation();
+        
+        // Debug output every 2 seconds
+        _debugTimer += Time.deltaTime;
+        if (_debugTimer >= 2f)
+        {
+            _debugTimer = 0f;
+            Debug.Log($"[AudioReactive] Levels - Bass:{bass:F3} Mid:{mid:F3} Treble:{treble:F3} Overall:{overall:F3} | Modulating: Disp={modulateDisplacement} Wave={modulateWave} Hue={modulateHue}");
+        }
     }
     
     private void CaptureBaseValues()
@@ -341,9 +381,19 @@ public class AudioReactive : MonoBehaviour
     private void AnalyzeAudio()
     {
         if (_samples == null || _spectrum == null) return;
+        if (_micClip == null) return;
         
-        // Get audio samples
-        _audioSource.GetOutputData(_samples, 0);
+        // Get current microphone position
+        string device = CurrentDevice;
+        if (string.IsNullOrEmpty(device)) return;
+        
+        int micPosition = Microphone.GetPosition(device);
+        if (micPosition < _samples.Length) return; // Not enough data yet
+        
+        // Read directly from the microphone clip for more reliable data
+        int startPosition = micPosition - _samples.Length;
+        if (startPosition < 0) startPosition = 0;
+        _micClip.GetData(_samples, startPosition);
         
         // Calculate overall volume (RMS)
         float sum = 0;
@@ -351,7 +401,7 @@ public class AudioReactive : MonoBehaviour
             sum += _samples[i] * _samples[i];
         float rms = Mathf.Sqrt(sum / _samples.Length) * inputGain;
         
-        // Get spectrum data
+        // Get spectrum data from audio source (this still works)
         _audioSource.GetSpectrumData(_spectrum, 0, fftWindow);
         
         // Calculate frequency bands
@@ -440,13 +490,19 @@ public class AudioReactive : MonoBehaviour
     
     private void ApplyModulation()
     {
-        if (settings == null) return;
+        if (settings == null) 
+        {
+            Debug.LogWarning("[AudioReactive] Settings is null - cannot apply modulation!");
+            return;
+        }
         
         // Displacement
         if (modulateDisplacement)
         {
-            float mod = GetBandValue(displacementBand) * displacementAmount;
-            settings.displacementStrength = _baseDisplacement + mod;
+            float bandValue = GetBandValue(displacementBand);
+            float mod = bandValue * displacementAmount;
+            float newValue = _baseDisplacement + mod;
+            settings.displacementStrength = newValue;
         }
         
         // Wave
@@ -462,6 +518,7 @@ public class AudioReactive : MonoBehaviour
         {
             float mod = GetBandValue(hueBand) * hueAmount;
             float h = (_baseHue + mod) % 1f;
+            if (h < 0) h += 1f;
             Color.RGBToHSV(settings.primaryColor, out _, out float s, out float v);
             settings.primaryColor = Color.HSVToRGB(h, s, v);
         }

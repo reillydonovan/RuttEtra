@@ -72,7 +72,7 @@ public static class RuttEtraUICreator
         ui.controller = ctrl; ui.settings = s; ui.webcamCapture = wc; ui.controlPanel = panel;
         ui.animator = Object.FindFirstObjectByType<RuttEtraAnimator>();
         
-        // Find new feature components
+        // Find feature components
         ui.audioReactive = Object.FindFirstObjectByType<AudioReactive>();
         ui.analogEffects = Object.FindFirstObjectByType<AnalogEffects>();
         ui.feedbackEffect = Object.FindFirstObjectByType<FeedbackEffect>();
@@ -80,6 +80,17 @@ public static class RuttEtraUICreator
         ui.videoRecorder = Object.FindFirstObjectByType<VideoRecorder>();
         ui.oscReceiver = Object.FindFirstObjectByType<OSCReceiver>();
         ui.midiInput = Object.FindFirstObjectByType<MIDIInput>();
+        
+        // Find new experimental features
+        ui.glitchEffects = Object.FindFirstObjectByType<GlitchEffects>();
+        ui.colorPalette = Object.FindFirstObjectByType<ColorPaletteSystem>();
+        ui.mirrorKaleidoscope = Object.FindFirstObjectByType<MirrorKaleidoscope>();
+        ui.autoRandomizer = Object.FindFirstObjectByType<AutoRandomizer>();
+        ui.synthwaveGrid = Object.FindFirstObjectByType<SynthwaveGrid>();
+        ui.motionTrails = Object.FindFirstObjectByType<MotionTrails>();
+        ui.depthColorizer = Object.FindFirstObjectByType<DepthColorizer>();
+        ui.strobeController = Object.FindFirstObjectByType<StrobeController>();
+        ui.screenShake = Object.FindFirstObjectByType<ScreenShake>();
 
         // ============ ORIGINAL CONTROLS ============
         
@@ -302,6 +313,100 @@ public static class RuttEtraUICreator
         ui.midiEnableToggle = T(content, "Enable MIDI", midi ? midi.enableMIDI : false);
         ui.midiLearnToggle = T(content, "Learn Mode", midi ? midi.learnMode : false);
         ui.midiStatusText = TMP(content, "Move control to learn");
+        
+        // ============ NEW EXPERIMENTAL FEATURES ============
+        
+        // GLITCH EFFECTS
+        var ge = ui.glitchEffects;
+        H(content, "GLITCH EFFECTS", new Color(1f, 0.3f, 0.5f));
+        ui.glitchEnableToggle = T(content, "Enable Glitch", ge ? ge.enableGlitch : false);
+        ui.glitchIntensitySlider = S(content, "Intensity", 0, 1, ge ? ge.glitchIntensity : 0.5f);
+        ui.glitchAutoTriggerToggle = T(content, "Auto Trigger", ge ? ge.autoTrigger : false);
+        ui.glitchIntervalSlider = S(content, "Interval", 0.5f, 10, ge ? ge.triggerInterval : 3);
+        ui.glitchOnBeatToggle = T(content, "Glitch on Beat", ge ? ge.glitchOnBeat : false);
+        ui.glitchTriggerButton = B(content, "Trigger Glitch!");
+        
+        // COLOR PALETTE
+        var cp = ui.colorPalette;
+        H(content, "COLOR PALETTE", new Color(1f, 0.5f, 0.8f));
+        ui.paletteEnableToggle = T(content, "Enable Palette", cp ? cp.enablePalette : false);
+        ui.paletteDropdown = D(content, "Palette", cp != null ? GetPaletteNames(cp) : new List<string>{ "Vaporwave", "Cyberpunk", "CRT Green" });
+        var paletteBtnRow = R(content, RH);
+        var hlg2 = paletteBtnRow.AddComponent<HorizontalLayoutGroup>();
+        hlg2.spacing = 4; hlg2.childControlWidth = hlg2.childControlHeight = true;
+        ui.palettePrevButton = BSmall(paletteBtnRow, "<");
+        ui.paletteNextButton = BSmall(paletteBtnRow, ">");
+        ui.paletteAutoToggle = T(content, "Auto Cycle", cp ? cp.autoTransition : false);
+        ui.paletteTransitionSlider = S(content, "Transition Time", 0.5f, 5, cp ? cp.transitionDuration : 2);
+        
+        // MIRROR & KALEIDOSCOPE
+        var mk = ui.mirrorKaleidoscope;
+        H(content, "MIRROR/KALEIDOSCOPE", new Color(0.6f, 0.8f, 1f));
+        ui.mirrorEnableToggle = T(content, "Enable Mirror", mk ? mk.enableMirror : false);
+        ui.mirrorModeDropdown = D(content, "Mirror Mode", new List<string>{ "Horizontal", "Vertical", "Quad" });
+        ui.kaleidoscopeEnableToggle = T(content, "Kaleidoscope", mk ? mk.enableKaleidoscope : false);
+        ui.kaleidoscopeSegmentsSlider = S(content, "Segments", 2, 12, mk ? mk.kaleidoscopeSegments : 6, true);
+        ui.kaleidoscopeAnimateToggle = T(content, "Animate", mk ? mk.animateRotation : false);
+        ui.kaleidoscopeSpeedSlider = S(content, "Speed", 0, 2, mk ? mk.rotationSpeed : 0.5f);
+        
+        // AUTO RANDOMIZER
+        var ar2 = ui.autoRandomizer;
+        H(content, "AUTO RANDOMIZER", new Color(0.9f, 0.7f, 0.3f));
+        ui.randomizerEnableToggle = T(content, "Enable", ar2 ? ar2.enableRandomizer : false);
+        ui.randomizerSpeedSlider = S(content, "Speed", 0.01f, 0.5f, ar2 ? ar2.globalSpeed : 0.1f);
+        ui.randomizerIntensitySlider = S(content, "Intensity", 0, 1, ar2 ? ar2.globalIntensity : 0.5f);
+        ui.randomizerDisplacementToggle = T(content, "Displacement", ar2 ? ar2.randomizeDisplacement : true);
+        ui.randomizerWaveToggle = T(content, "Wave", ar2 ? ar2.randomizeWave : true);
+        ui.randomizerRotationToggle = T(content, "Rotation", ar2 ? ar2.randomizeRotation : true);
+        ui.randomizerHueToggle = T(content, "Hue", ar2 ? ar2.randomizeHue : true);
+        ui.randomizerResetButton = B(content, "Reset to Base");
+        
+        // SYNTHWAVE GRID
+        var sg = ui.synthwaveGrid;
+        H(content, "SYNTHWAVE GRID", new Color(1f, 0.2f, 0.6f));
+        ui.gridEnableToggle = T(content, "Enable Grid", sg ? sg.enableGrid : false);
+        ui.gridScrollSpeedSlider = S(content, "Scroll Speed", 0, 5, sg ? sg.scrollSpeed : 2);
+        ui.gridAudioReactiveToggle = T(content, "Audio Reactive", sg ? sg.reactToAudio : false);
+        ui.gridShowSunToggle = T(content, "Show Sun", sg ? sg.showSun : true);
+        ui.gridAnimateColorsToggle = T(content, "Animate Colors", sg ? sg.animateColors : true);
+        
+        // MOTION TRAILS
+        var mt = ui.motionTrails;
+        H(content, "MOTION TRAILS", new Color(0.5f, 0.3f, 1f));
+        ui.trailsEnableToggle = T(content, "Enable Trails", mt ? mt.enableTrails : false);
+        ui.trailsCountSlider = S(content, "Trail Count", 1, 10, mt ? mt.trailCount : 5, true);
+        ui.trailsOpacitySlider = S(content, "Opacity", 0, 1, mt ? mt.trailOpacity : 0.7f);
+        ui.trailsColorShiftToggle = T(content, "Color Shift", mt ? mt.colorShift : true);
+        ui.trailsClearButton = B(content, "Clear Trails");
+        
+        // DEPTH COLORIZER
+        var dc = ui.depthColorizer;
+        H(content, "DEPTH COLORIZER", new Color(0.3f, 0.8f, 0.5f));
+        ui.depthColorEnableToggle = T(content, "Enable Depth Color", dc ? dc.enableDepthColor : false);
+        ui.depthColorModeDropdown = D(content, "Color Mode", new List<string>{ "Gradient", "Rainbow", "Thermal" });
+        ui.depthRainbowAnimateToggle = T(content, "Animate", dc ? dc.animateRainbow : false);
+        
+        // STROBE CONTROLLER
+        var sc2 = ui.strobeController;
+        H(content, "STROBE/FLASH", new Color(1f, 1f, 0.3f));
+        ui.strobeEnableToggle = T(content, "Enable Strobe", sc2 ? sc2.enableStrobe : false);
+        ui.strobeRateSlider = S(content, "Strobe Rate", 1, 20, sc2 ? sc2.strobeRate : 4);
+        ui.strobeBeatSyncToggle = T(content, "Sync to Beat", sc2 ? sc2.syncToBeat : false);
+        ui.flashOnBeatToggle = T(content, "Flash on Beat", sc2 ? sc2.flashOnBeat : false);
+        var flashBtnRow = R(content, RH);
+        var hlg3 = flashBtnRow.AddComponent<HorizontalLayoutGroup>();
+        hlg3.spacing = 4; hlg3.childControlWidth = hlg3.childControlHeight = true;
+        ui.flashTriggerButton = BSmall(flashBtnRow, "Flash!");
+        ui.blackoutButton = BSmall(flashBtnRow, "Blackout");
+        
+        // SCREEN SHAKE
+        var ss = ui.screenShake;
+        H(content, "SCREEN SHAKE", new Color(1f, 0.5f, 0.2f));
+        ui.shakeEnableToggle = T(content, "Enable Shake", ss ? ss.enableShake : false);
+        ui.shakeIntensitySlider = S(content, "Intensity", 0, 1, ss ? ss.shakeIntensity : 0.3f);
+        ui.shakeOnBeatToggle = T(content, "Shake on Beat", ss ? ss.shakeOnBeat : false);
+        ui.shakeContinuousToggle = T(content, "Continuous", ss ? ss.continuousShake : false);
+        ui.shakeTriggerButton = B(content, "Trigger Shake!");
 
         // ACTIONS
         H(content, "ACTIONS");
@@ -324,6 +429,12 @@ public static class RuttEtraUICreator
                 names.Add(preset.name);
         }
         return names;
+    }
+    
+    static List<string> GetPaletteNames(ColorPaletteSystem cps)
+    {
+        // At edit time, use default list since palettes are initialized at runtime
+        return new List<string>{ "CRT Green", "Vaporwave", "Cyberpunk", "Sunset", "Ocean", "Fire", "Matrix", "Pastel", "Monochrome" };
     }
 
     static void EnsureES()

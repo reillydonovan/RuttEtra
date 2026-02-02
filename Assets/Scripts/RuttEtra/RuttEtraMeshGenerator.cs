@@ -35,6 +35,11 @@ public class RuttEtraMeshGenerator : MonoBehaviour
     private float _waveTime;
     private int _frameCount;
     
+    // Optional effect components
+    private GlitchEffects _glitchEffects;
+    private MirrorKaleidoscope _mirrorKaleidoscope;
+    private DepthColorizer _depthColorizer;
+    
     private void Awake()
     {
         _meshFilter = GetComponent<MeshFilter>();
@@ -46,6 +51,12 @@ public class RuttEtraMeshGenerator : MonoBehaviour
     {
         if (webcamCapture != null)
             webcamCapture.OnFrameReady += OnWebcamFrame;
+            
+        // Find optional effect components
+        _glitchEffects = FindFirstObjectByType<GlitchEffects>();
+        _mirrorKaleidoscope = FindFirstObjectByType<MirrorKaleidoscope>();
+        _depthColorizer = FindFirstObjectByType<DepthColorizer>();
+        
         GenerateMesh();
     }
     
@@ -362,9 +373,54 @@ public class RuttEtraMeshGenerator : MonoBehaviour
                 _colors[i] = Color.Lerp(prim, sec, lum * blend) * flicker;
         }
         
+        // Apply glitch effects to vertices
+        if (_glitchEffects != null && _glitchEffects.enableGlitch)
+        {
+            _glitchEffects.ApplyGlitchToVertices(_vertices, hRes, vRes);
+        }
+        
+        // Apply mirror/kaleidoscope effects
+        if (_mirrorKaleidoscope != null && (_mirrorKaleidoscope.enableMirror || _mirrorKaleidoscope.enableKaleidoscope))
+        {
+            ApplyMirrorEffects(hRes, vRes);
+        }
+        
+        // Apply depth colorizer
+        if (_depthColorizer != null && _depthColorizer.enableDepthColor)
+        {
+            _depthColorizer.ApplyDepthColors(_vertices, _colors, settings.displacementStrength);
+        }
+        
         _mesh.vertices = _vertices;
         _mesh.colors = _colors;
         _mesh.RecalculateBounds();
+    }
+    
+    private void ApplyMirrorEffects(int hRes, int vRes)
+    {
+        if (_mirrorKaleidoscope == null) return;
+        
+        for (int i = 0; i < _vertices.Length; i++)
+        {
+            int x = i % hRes;
+            int y = i / hRes;
+            float u = x / (float)(hRes - 1);
+            float v = y / (float)(vRes - 1);
+            
+            // Transform UV through mirror/kaleidoscope
+            Vector2 uv = _mirrorKaleidoscope.TransformUV(new Vector2(u, v));
+            
+            // Map back to vertex index and copy position
+            int srcX = Mathf.Clamp(Mathf.RoundToInt(uv.x * (hRes - 1)), 0, hRes - 1);
+            int srcY = Mathf.Clamp(Mathf.RoundToInt(uv.y * (vRes - 1)), 0, vRes - 1);
+            int srcIndex = srcY * hRes + srcX;
+            
+            if (srcIndex != i && srcIndex < _vertices.Length)
+            {
+                // Only modify Z displacement based on mirrored source
+                _vertices[i].z = _vertices[srcIndex].z;
+            }
+        }
     }
     
     private void UpdateMaterialProperties()

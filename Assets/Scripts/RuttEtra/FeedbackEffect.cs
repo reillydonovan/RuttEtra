@@ -55,6 +55,13 @@ public class FeedbackEffect : MonoBehaviour
             var controller = FindFirstObjectByType<RuttEtraController>();
             if (controller) settings = controller.settings;
         }
+        
+        // Check if using URP - OnRenderImage doesn't work in URP
+        var renderPipeline = GraphicsSettings.currentRenderPipeline;
+        if (renderPipeline != null && renderPipeline.GetType().Name.Contains("Universal"))
+        {
+            Debug.LogWarning("[FeedbackEffect] OnRenderImage is not supported in URP. This effect needs to be converted to a ScriptableRendererFeature to work properly.");
+        }
     }
     
     private void CreateResources(int width, int height)

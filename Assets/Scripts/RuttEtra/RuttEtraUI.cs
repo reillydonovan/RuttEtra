@@ -212,6 +212,87 @@ public class RuttEtraUI : MonoBehaviour
     public Toggle midiLearnToggle;
     public TMP_Text midiStatusText;
     
+    // ====== NEW EXPERIMENTAL FEATURES ======
+    
+    [Header("New Feature References")]
+    public GlitchEffects glitchEffects;
+    public ColorPaletteSystem colorPalette;
+    public MirrorKaleidoscope mirrorKaleidoscope;
+    public AutoRandomizer autoRandomizer;
+    public SynthwaveGrid synthwaveGrid;
+    public MotionTrails motionTrails;
+    public DepthColorizer depthColorizer;
+    public StrobeController strobeController;
+    public ScreenShake screenShake;
+    
+    [Header("Glitch Effects")]
+    public Toggle glitchEnableToggle;
+    public Slider glitchIntensitySlider;
+    public Toggle glitchAutoTriggerToggle;
+    public Slider glitchIntervalSlider;
+    public Toggle glitchOnBeatToggle;
+    public Button glitchTriggerButton;
+    
+    [Header("Color Palette")]
+    public Toggle paletteEnableToggle;
+    public TMP_Dropdown paletteDropdown;
+    public Button paletteNextButton;
+    public Button palettePrevButton;
+    public Toggle paletteAutoToggle;
+    public Slider paletteTransitionSlider;
+    
+    [Header("Mirror Kaleidoscope")]
+    public Toggle mirrorEnableToggle;
+    public TMP_Dropdown mirrorModeDropdown;
+    public Toggle kaleidoscopeEnableToggle;
+    public Slider kaleidoscopeSegmentsSlider;
+    public Toggle kaleidoscopeAnimateToggle;
+    public Slider kaleidoscopeSpeedSlider;
+    
+    [Header("Auto Randomizer")]
+    public Toggle randomizerEnableToggle;
+    public Slider randomizerSpeedSlider;
+    public Slider randomizerIntensitySlider;
+    public Toggle randomizerDisplacementToggle;
+    public Toggle randomizerWaveToggle;
+    public Toggle randomizerRotationToggle;
+    public Toggle randomizerHueToggle;
+    public Button randomizerResetButton;
+    
+    [Header("Synthwave Grid")]
+    public Toggle gridEnableToggle;
+    public Slider gridScrollSpeedSlider;
+    public Toggle gridAudioReactiveToggle;
+    public Toggle gridShowSunToggle;
+    public Toggle gridAnimateColorsToggle;
+    
+    [Header("Motion Trails")]
+    public Toggle trailsEnableToggle;
+    public Slider trailsCountSlider;
+    public Slider trailsOpacitySlider;
+    public Toggle trailsColorShiftToggle;
+    public Button trailsClearButton;
+    
+    [Header("Depth Colorizer")]
+    public Toggle depthColorEnableToggle;
+    public TMP_Dropdown depthColorModeDropdown;
+    public Toggle depthRainbowAnimateToggle;
+    
+    [Header("Strobe Controller")]
+    public Toggle strobeEnableToggle;
+    public Slider strobeRateSlider;
+    public Toggle strobeBeatSyncToggle;
+    public Toggle flashOnBeatToggle;
+    public Button flashTriggerButton;
+    public Button blackoutButton;
+    
+    [Header("Screen Shake")]
+    public Toggle shakeEnableToggle;
+    public Slider shakeIntensitySlider;
+    public Toggle shakeOnBeatToggle;
+    public Toggle shakeContinuousToggle;
+    public Button shakeTriggerButton;
+    
     private bool _panelVisible = true;
     
     private void Start()
@@ -225,7 +306,10 @@ public class RuttEtraUI : MonoBehaviour
         
         Debug.Log("RuttEtraUI initialized. Settings: " + (settings != null ? "OK" : "NULL") + 
                   ", Controller: " + (controller != null ? "OK" : "NULL") +
-                  ", AudioReactive: " + (audioReactive != null ? "OK" : "NULL"));
+                  ", AudioReactive: " + (audioReactive != null ? "OK" : "NULL") +
+                  ", GlitchEffects: " + (glitchEffects != null ? "OK" : "NULL") +
+                  ", ColorPalette: " + (colorPalette != null ? "OK" : "NULL") +
+                  ", AutoRandomizer: " + (autoRandomizer != null ? "OK" : "NULL"));
     }
     
     private void FindReferences()
@@ -236,7 +320,7 @@ public class RuttEtraUI : MonoBehaviour
         if (webcamCapture == null) webcamCapture = FindFirstObjectByType<WebcamCapture>();
         if (animator == null) animator = FindFirstObjectByType<RuttEtraAnimator>();
         
-        // Auto-find new feature components
+        // Auto-find feature components
         if (audioReactive == null) audioReactive = FindFirstObjectByType<AudioReactive>();
         if (analogEffects == null) analogEffects = FindFirstObjectByType<AnalogEffects>();
         if (feedbackEffect == null) feedbackEffect = FindFirstObjectByType<FeedbackEffect>();
@@ -244,6 +328,17 @@ public class RuttEtraUI : MonoBehaviour
         if (videoRecorder == null) videoRecorder = FindFirstObjectByType<VideoRecorder>();
         if (oscReceiver == null) oscReceiver = FindFirstObjectByType<OSCReceiver>();
         if (midiInput == null) midiInput = FindFirstObjectByType<MIDIInput>();
+        
+        // Auto-find new experimental features
+        if (glitchEffects == null) glitchEffects = FindFirstObjectByType<GlitchEffects>();
+        if (colorPalette == null) colorPalette = FindFirstObjectByType<ColorPaletteSystem>();
+        if (mirrorKaleidoscope == null) mirrorKaleidoscope = FindFirstObjectByType<MirrorKaleidoscope>();
+        if (autoRandomizer == null) autoRandomizer = FindFirstObjectByType<AutoRandomizer>();
+        if (synthwaveGrid == null) synthwaveGrid = FindFirstObjectByType<SynthwaveGrid>();
+        if (motionTrails == null) motionTrails = FindFirstObjectByType<MotionTrails>();
+        if (depthColorizer == null) depthColorizer = FindFirstObjectByType<DepthColorizer>();
+        if (strobeController == null) strobeController = FindFirstObjectByType<StrobeController>();
+        if (screenShake == null) screenShake = FindFirstObjectByType<ScreenShake>();
     }
     
     private void InitializeAnimator()
@@ -455,6 +550,110 @@ public class RuttEtraUI : MonoBehaviour
             Set(midiEnableToggle, midiInput.enableMIDI);
             Set(midiLearnToggle, midiInput.learnMode);
         }
+        
+        // ===== NEW EXPERIMENTAL FEATURES =====
+        
+        // Glitch Effects
+        if (glitchEffects != null)
+        {
+            Set(glitchEnableToggle, glitchEffects.enableGlitch);
+            Set(glitchIntensitySlider, glitchEffects.glitchIntensity);
+            Set(glitchAutoTriggerToggle, glitchEffects.autoTrigger);
+            Set(glitchIntervalSlider, glitchEffects.triggerInterval);
+            Set(glitchOnBeatToggle, glitchEffects.glitchOnBeat);
+            Debug.Log($"[UI] GlitchEffects initialized: enabled={glitchEffects.enableGlitch}");
+        }
+        else Debug.LogWarning("[UI] GlitchEffects not found in scene");
+        
+        // Color Palette
+        if (colorPalette != null)
+        {
+            Set(paletteEnableToggle, colorPalette.enablePalette);
+            Set(paletteAutoToggle, colorPalette.autoTransition);
+            Set(paletteTransitionSlider, colorPalette.transitionDuration);
+            Debug.Log($"[UI] ColorPalette initialized: enabled={colorPalette.enablePalette}");
+        }
+        else Debug.LogWarning("[UI] ColorPaletteSystem not found in scene");
+        
+        // Mirror/Kaleidoscope
+        if (mirrorKaleidoscope != null)
+        {
+            Set(mirrorEnableToggle, mirrorKaleidoscope.enableMirror);
+            Set(kaleidoscopeEnableToggle, mirrorKaleidoscope.enableKaleidoscope);
+            Set(kaleidoscopeSegmentsSlider, mirrorKaleidoscope.kaleidoscopeSegments);
+            Set(kaleidoscopeAnimateToggle, mirrorKaleidoscope.animateRotation);
+            Set(kaleidoscopeSpeedSlider, mirrorKaleidoscope.rotationSpeed);
+            Debug.Log($"[UI] MirrorKaleidoscope initialized");
+        }
+        else Debug.LogWarning("[UI] MirrorKaleidoscope not found in scene");
+        
+        // Auto Randomizer
+        if (autoRandomizer != null)
+        {
+            Set(randomizerEnableToggle, autoRandomizer.enableRandomizer);
+            Set(randomizerSpeedSlider, autoRandomizer.globalSpeed);
+            Set(randomizerIntensitySlider, autoRandomizer.globalIntensity);
+            Set(randomizerDisplacementToggle, autoRandomizer.randomizeDisplacement);
+            Set(randomizerWaveToggle, autoRandomizer.randomizeWave);
+            Set(randomizerRotationToggle, autoRandomizer.randomizeRotation);
+            Set(randomizerHueToggle, autoRandomizer.randomizeHue);
+            Debug.Log($"[UI] AutoRandomizer initialized: enabled={autoRandomizer.enableRandomizer}");
+        }
+        else Debug.LogWarning("[UI] AutoRandomizer not found in scene");
+        
+        // Synthwave Grid
+        if (synthwaveGrid != null)
+        {
+            Set(gridEnableToggle, synthwaveGrid.enableGrid);
+            Set(gridScrollSpeedSlider, synthwaveGrid.scrollSpeed);
+            Set(gridAudioReactiveToggle, synthwaveGrid.reactToAudio);
+            Set(gridShowSunToggle, synthwaveGrid.showSun);
+            Set(gridAnimateColorsToggle, synthwaveGrid.animateColors);
+            Debug.Log($"[UI] SynthwaveGrid initialized: enabled={synthwaveGrid.enableGrid}");
+        }
+        else Debug.LogWarning("[UI] SynthwaveGrid not found in scene");
+        
+        // Motion Trails
+        if (motionTrails != null)
+        {
+            Set(trailsEnableToggle, motionTrails.enableTrails);
+            Set(trailsCountSlider, motionTrails.trailCount);
+            Set(trailsOpacitySlider, motionTrails.trailOpacity);
+            Set(trailsColorShiftToggle, motionTrails.colorShift);
+            Debug.Log($"[UI] MotionTrails initialized: enabled={motionTrails.enableTrails}");
+        }
+        else Debug.LogWarning("[UI] MotionTrails not found in scene");
+        
+        // Depth Colorizer
+        if (depthColorizer != null)
+        {
+            Set(depthColorEnableToggle, depthColorizer.enableDepthColor);
+            Set(depthRainbowAnimateToggle, depthColorizer.animateRainbow);
+            Debug.Log($"[UI] DepthColorizer initialized: enabled={depthColorizer.enableDepthColor}");
+        }
+        else Debug.LogWarning("[UI] DepthColorizer not found in scene");
+        
+        // Strobe Controller
+        if (strobeController != null)
+        {
+            Set(strobeEnableToggle, strobeController.enableStrobe);
+            Set(strobeRateSlider, strobeController.strobeRate);
+            Set(strobeBeatSyncToggle, strobeController.syncToBeat);
+            Set(flashOnBeatToggle, strobeController.flashOnBeat);
+            Debug.Log($"[UI] StrobeController initialized: enabled={strobeController.enableStrobe}");
+        }
+        else Debug.LogWarning("[UI] StrobeController not found in scene");
+        
+        // Screen Shake
+        if (screenShake != null)
+        {
+            Set(shakeEnableToggle, screenShake.enableShake);
+            Set(shakeIntensitySlider, screenShake.shakeIntensity);
+            Set(shakeOnBeatToggle, screenShake.shakeOnBeat);
+            Set(shakeContinuousToggle, screenShake.continuousShake);
+            Debug.Log($"[UI] ScreenShake initialized: enabled={screenShake.enableShake}");
+        }
+        else Debug.LogWarning("[UI] ScreenShake not found in scene");
     }
     
     void Set(Slider s, float v) { if (s) s.SetValueWithoutNotify(v); }
@@ -671,6 +870,104 @@ public class RuttEtraUI : MonoBehaviour
             Bind(midiEnableToggle, v => midiInput.enableMIDI = v);
             Bind(midiLearnToggle, v => midiInput.learnMode = v);
         }
+        
+        // ===== GLITCH EFFECTS =====
+        if (glitchEffects != null)
+        {
+            Bind(glitchEnableToggle, v => { glitchEffects.enableGlitch = v; Debug.Log($"[GlitchEffects] Enabled: {v}"); });
+            Bind(glitchIntensitySlider, v => glitchEffects.glitchIntensity = v);
+            Bind(glitchAutoTriggerToggle, v => { glitchEffects.autoTrigger = v; Debug.Log($"[GlitchEffects] AutoTrigger: {v}"); });
+            Bind(glitchIntervalSlider, v => glitchEffects.triggerInterval = v);
+            Bind(glitchOnBeatToggle, v => { glitchEffects.glitchOnBeat = v; Debug.Log($"[GlitchEffects] GlitchOnBeat: {v}"); });
+            glitchTriggerButton?.onClick.AddListener(() => glitchEffects.TriggerGlitch());
+        }
+        
+        // ===== COLOR PALETTE =====
+        if (colorPalette != null)
+        {
+            Bind(paletteEnableToggle, v => { colorPalette.enablePalette = v; Debug.Log($"[ColorPalette] Enabled: {v}"); });
+            paletteDropdown?.onValueChanged.AddListener(i => { colorPalette.ApplyPaletteByIndex(i); Debug.Log($"[ColorPalette] Selected palette index: {i}"); });
+            paletteNextButton?.onClick.AddListener(() => { colorPalette.NextPalette(); Debug.Log("[ColorPalette] Next palette"); });
+            palettePrevButton?.onClick.AddListener(() => { colorPalette.PreviousPalette(); Debug.Log("[ColorPalette] Previous palette"); });
+            Bind(paletteAutoToggle, v => { colorPalette.autoTransition = v; Debug.Log($"[ColorPalette] AutoTransition: {v}"); });
+            Bind(paletteTransitionSlider, v => colorPalette.transitionDuration = v);
+        }
+        
+        // ===== MIRROR KALEIDOSCOPE =====
+        if (mirrorKaleidoscope != null)
+        {
+            Bind(mirrorEnableToggle, v => { mirrorKaleidoscope.enableMirror = v; Debug.Log($"[MirrorKaleidoscope] Mirror Enabled: {v}"); });
+            mirrorModeDropdown?.onValueChanged.AddListener(i => { mirrorKaleidoscope.mirrorMode = (MirrorKaleidoscope.MirrorMode)i; Debug.Log($"[MirrorKaleidoscope] Mode: {i}"); });
+            Bind(kaleidoscopeEnableToggle, v => { mirrorKaleidoscope.enableKaleidoscope = v; Debug.Log($"[MirrorKaleidoscope] Kaleidoscope Enabled: {v}"); });
+            Bind(kaleidoscopeSegmentsSlider, v => mirrorKaleidoscope.kaleidoscopeSegments = Mathf.RoundToInt(v));
+            Bind(kaleidoscopeAnimateToggle, v => mirrorKaleidoscope.animateRotation = v);
+            Bind(kaleidoscopeSpeedSlider, v => mirrorKaleidoscope.rotationSpeed = v);
+        }
+        
+        // ===== AUTO RANDOMIZER =====
+        if (autoRandomizer != null)
+        {
+            Bind(randomizerEnableToggle, v => { 
+                autoRandomizer.enableRandomizer = v; 
+                Debug.Log($"[AutoRandomizer] Enabled: {v}");
+            });
+            Bind(randomizerSpeedSlider, v => autoRandomizer.globalSpeed = v);
+            Bind(randomizerIntensitySlider, v => autoRandomizer.globalIntensity = v);
+            Bind(randomizerDisplacementToggle, v => autoRandomizer.randomizeDisplacement = v);
+            Bind(randomizerWaveToggle, v => autoRandomizer.randomizeWave = v);
+            Bind(randomizerRotationToggle, v => autoRandomizer.randomizeRotation = v);
+            Bind(randomizerHueToggle, v => autoRandomizer.randomizeHue = v);
+            randomizerResetButton?.onClick.AddListener(() => autoRandomizer.ResetToBase());
+        }
+        
+        // ===== SYNTHWAVE GRID =====
+        if (synthwaveGrid != null)
+        {
+            Bind(gridEnableToggle, v => { synthwaveGrid.enableGrid = v; Debug.Log($"[SynthwaveGrid] Enabled: {v}"); });
+            Bind(gridScrollSpeedSlider, v => synthwaveGrid.scrollSpeed = v);
+            Bind(gridAudioReactiveToggle, v => { synthwaveGrid.reactToAudio = v; Debug.Log($"[SynthwaveGrid] AudioReactive: {v}"); });
+            Bind(gridShowSunToggle, v => synthwaveGrid.showSun = v);
+            Bind(gridAnimateColorsToggle, v => synthwaveGrid.animateColors = v);
+        }
+        
+        // ===== MOTION TRAILS =====
+        if (motionTrails != null)
+        {
+            Bind(trailsEnableToggle, v => { motionTrails.enableTrails = v; Debug.Log($"[MotionTrails] Enabled: {v}"); });
+            Bind(trailsCountSlider, v => motionTrails.trailCount = Mathf.RoundToInt(v));
+            Bind(trailsOpacitySlider, v => motionTrails.trailOpacity = v);
+            Bind(trailsColorShiftToggle, v => motionTrails.colorShift = v);
+            trailsClearButton?.onClick.AddListener(() => { motionTrails.ClearTrails(); Debug.Log("[MotionTrails] Cleared"); });
+        }
+        
+        // ===== DEPTH COLORIZER =====
+        if (depthColorizer != null)
+        {
+            Bind(depthColorEnableToggle, v => { depthColorizer.enableDepthColor = v; Debug.Log($"[DepthColorizer] Enabled: {v}"); });
+            depthColorModeDropdown?.onValueChanged.AddListener(i => { depthColorizer.colorMode = (DepthColorizer.ColorMode)i; Debug.Log($"[DepthColorizer] Mode: {i}"); });
+            Bind(depthRainbowAnimateToggle, v => depthColorizer.animateRainbow = v);
+        }
+        
+        // ===== STROBE CONTROLLER =====
+        if (strobeController != null)
+        {
+            Bind(strobeEnableToggle, v => { strobeController.enableStrobe = v; Debug.Log($"[StrobeController] Enabled: {v}"); });
+            Bind(strobeRateSlider, v => strobeController.strobeRate = v);
+            Bind(strobeBeatSyncToggle, v => { strobeController.syncToBeat = v; Debug.Log($"[StrobeController] SyncToBeat: {v}"); });
+            Bind(flashOnBeatToggle, v => { strobeController.flashOnBeat = v; Debug.Log($"[StrobeController] FlashOnBeat: {v}"); });
+            flashTriggerButton?.onClick.AddListener(() => { strobeController.TriggerFlash(); Debug.Log("[StrobeController] Flash triggered"); });
+            blackoutButton?.onClick.AddListener(() => { strobeController.TriggerBlackout(); Debug.Log("[StrobeController] Blackout triggered"); });
+        }
+        
+        // ===== SCREEN SHAKE =====
+        if (screenShake != null)
+        {
+            Bind(shakeEnableToggle, v => { screenShake.enableShake = v; Debug.Log($"[ScreenShake] Enabled: {v}"); });
+            Bind(shakeIntensitySlider, v => screenShake.shakeIntensity = v);
+            Bind(shakeOnBeatToggle, v => { screenShake.shakeOnBeat = v; Debug.Log($"[ScreenShake] ShakeOnBeat: {v}"); });
+            Bind(shakeContinuousToggle, v => { screenShake.continuousShake = v; Debug.Log($"[ScreenShake] Continuous: {v}"); });
+            shakeTriggerButton?.onClick.AddListener(() => { screenShake.TriggerShake(); Debug.Log("[ScreenShake] Shake triggered"); });
+        }
     }
     
     void Bind(Slider s, System.Action<float> a) { s?.onValueChanged.AddListener(v => a(v)); }
@@ -785,8 +1082,15 @@ public class RuttEtraUI : MonoBehaviour
     
     public void ResetAll()
     {
-        if (!settings) return;
+        Debug.Log("[ResetAll] Resetting all settings and features...");
         
+        if (!settings) 
+        {
+            Debug.LogWarning("[ResetAll] Settings is null!");
+            return;
+        }
+        
+        // Core settings
         settings.brightness = 0; settings.contrast = 1; settings.threshold = 0; settings.gamma = 1;
         settings.edgeDetect = false; settings.posterize = 1;
         settings.displacementStrength = 1; settings.displacementSmoothing = 0.5f;
@@ -807,16 +1111,131 @@ public class RuttEtraUI : MonoBehaviour
         settings.feedback = 0; settings.feedbackZoom = 0; settings.feedbackRotation = 0;
         settings.noiseAmount = 0; settings.persistence = 0; settings.scanlineFlicker = 0; settings.bloom = 0;
         
+        // Webcam
         if (webcamCapture) { webcamCapture.mirrorHorizontal = true; webcamCapture.mirrorVertical = false; }
         
         // Reset feedback effect
         feedbackEffect?.ClearFeedback();
         
-        // Recapture audio base values
-        audioReactive?.RecaptureBaseValues();
+        // Reset audio reactive
+        if (audioReactive != null)
+        {
+            audioReactive.modulateDisplacement = false;
+            audioReactive.modulateWave = false;
+            audioReactive.modulateHue = false;
+            audioReactive.modulateScale = false;
+            audioReactive.modulateRotation = false;
+            audioReactive.modulateGlow = false;
+            audioReactive.flashOnBeat = false;
+            audioReactive.pulseOnBeat = false;
+            audioReactive.RecaptureBaseValues();
+        }
         
+        // Reset analog effects
+        if (analogEffects != null)
+        {
+            analogEffects.enableCRT = false;
+            analogEffects.enableVHS = false;
+            analogEffects.enableChromatic = false;
+            analogEffects.enableHoldDrift = false;
+            analogEffects.enableSignalNoise = false;
+        }
+        
+        // Reset animator
+        if (animator != null)
+        {
+            animator.SetAutoRotate(false);
+            animator.SetHueCycle(false);
+            animator.SetWaveAnimate(false);
+            animator.SetZPulse(false);
+            animator.SetBreathe(false);
+            animator.SetDistortAnimate(false);
+        }
+        
+        // ===== RESET NEW EXPERIMENTAL FEATURES =====
+        
+        // Glitch Effects
+        if (glitchEffects != null)
+        {
+            glitchEffects.enableGlitch = false;
+            glitchEffects.autoTrigger = false;
+            glitchEffects.glitchOnBeat = false;
+            Debug.Log("[ResetAll] GlitchEffects disabled");
+        }
+        
+        // Color Palette
+        if (colorPalette != null)
+        {
+            colorPalette.enablePalette = false;
+            colorPalette.autoTransition = false;
+            Debug.Log("[ResetAll] ColorPalette disabled");
+        }
+        
+        // Mirror/Kaleidoscope
+        if (mirrorKaleidoscope != null)
+        {
+            mirrorKaleidoscope.enableMirror = false;
+            mirrorKaleidoscope.enableKaleidoscope = false;
+            mirrorKaleidoscope.animateRotation = false;
+            Debug.Log("[ResetAll] MirrorKaleidoscope disabled");
+        }
+        
+        // Auto Randomizer
+        if (autoRandomizer != null)
+        {
+            autoRandomizer.enableRandomizer = false;
+            autoRandomizer.ResetToBase();
+            Debug.Log("[ResetAll] AutoRandomizer disabled");
+        }
+        
+        // Synthwave Grid
+        if (synthwaveGrid != null)
+        {
+            synthwaveGrid.enableGrid = false;
+            synthwaveGrid.reactToAudio = false;
+            Debug.Log("[ResetAll] SynthwaveGrid disabled");
+        }
+        
+        // Motion Trails
+        if (motionTrails != null)
+        {
+            motionTrails.enableTrails = false;
+            motionTrails.ClearTrails();
+            Debug.Log("[ResetAll] MotionTrails disabled");
+        }
+        
+        // Depth Colorizer
+        if (depthColorizer != null)
+        {
+            depthColorizer.enableDepthColor = false;
+            Debug.Log("[ResetAll] DepthColorizer disabled");
+        }
+        
+        // Strobe Controller
+        if (strobeController != null)
+        {
+            strobeController.enableStrobe = false;
+            strobeController.flashOnBeat = false;
+            strobeController.syncToBeat = false;
+            Debug.Log("[ResetAll] StrobeController disabled");
+        }
+        
+        // Screen Shake
+        if (screenShake != null)
+        {
+            screenShake.enableShake = false;
+            screenShake.shakeOnBeat = false;
+            screenShake.continuousShake = false;
+            Debug.Log("[ResetAll] ScreenShake disabled");
+        }
+        
+        // Re-initialize all UI elements to reflect reset values
         InitializeUI();
+        InitializeNewFeatures();
+        
         Refresh();
         ResetCamera();
+        
+        Debug.Log("[ResetAll] Complete - all settings and features reset to defaults");
     }
 }

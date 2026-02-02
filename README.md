@@ -134,6 +134,102 @@ Live performance features:
 
 ---
 
+## New Features (Experimental)
+
+These features are new additions that extend the creative possibilities. Add them via `RuttEtra > Add New Features > Add All New Features`.
+
+### Glitch Effects
+Digital glitch and corruption effects:
+- **Vertex Glitch**: Random vertex displacement
+- **Scan Line Disruption**: Horizontal tear effects
+- **Block Displacement**: Chunk-based glitching
+- **Wave Corruption**: Wavy distortion
+- **Auto Trigger**: Periodic random glitches
+- **Beat Sync**: Glitch on audio beat detection
+
+### Color Palette System
+15 built-in color themes with smooth transitions:
+- **CRT Green**: Classic terminal look
+- **Vaporwave**: Hot pink and cyan
+- **Cyberpunk**: Yellow and magenta
+- **Synthwave**: Orange and purple sunset
+- **Ice Blue**: Cool cyan tones
+- **Fire**: Orange to red gradient
+- **Matrix**: Green on black
+- **Monochrome**: Black and white
+- **Neon Pink**: Hot pink and purple
+- **Retro Amber**: Classic amber terminal
+- **Ocean**: Turquoise to deep blue
+- **Toxic**: Lime green
+- **Plasma**: Purple and cyan
+- **Sunset**: Orange and pink
+- **Arctic**: White-blue cold tones
+
+Features:
+- **Auto Transition**: Cycle through palettes automatically
+- **Smooth Morphing**: Animated color transitions
+- **Keyboard/OSC Control**: Switch palettes programmatically
+
+### Mirror & Kaleidoscope
+Symmetry effects for the visualization:
+- **Mirror Modes**: Horizontal, Vertical, Both, Diagonal
+- **Kaleidoscope**: 2-12 segment symmetry
+- **Animated Rotation**: Spinning kaleidoscope
+- **Radial Symmetry**: Rotated copies of the mesh
+- **Wave Mirror**: Oscillating mirror threshold
+
+### Auto Randomizer
+Creates evolving, ever-changing visuals using Perlin noise:
+- **Parameter Drift**: Smooth random changes to displacement, wave, rotation, etc.
+- **Global Speed/Intensity**: Control overall randomization
+- **Per-Parameter Control**: Enable/disable randomization for each parameter
+- **Base Value Capture**: Randomize around current settings
+
+### Synthwave Grid
+Classic retro horizon grid effect:
+- **Animated Grid**: Scrolling perspective grid
+- **Customizable Colors**: Grid, horizon, and sun colors
+- **Synthwave Sun**: Glowing horizon sun
+- **Audio Reactive**: Scroll speed reacts to bass
+- **Presets**: Synthwave and Tron styles
+
+### Motion Trails
+Ghost/afterimage effect:
+- **Trail Count**: Number of ghost copies (1-20)
+- **Trail Interval**: Time between captures
+- **Fade Modes**: Linear, Exponential, Stepped, Reverse
+- **Color Shift**: Hue shift along trail
+- **Scale/Rotate Trails**: Transform trails over time
+- **Audio Reactive**: Trail count based on audio level
+
+### Depth Colorizer
+Color the mesh based on Z displacement:
+- **Color Modes**: Gradient, Two-Color, Rainbow, Thermal, Bands
+- **Custom Gradient**: Define your own depth gradient
+- **Rainbow Mode**: Animated rainbow based on depth
+- **Thermal Mode**: Heat-map style coloring
+- **Auto Range**: Automatically detect depth range
+
+### Strobe Controller
+Rhythmic flash and strobe effects:
+- **Strobe Rate**: Flashes per second
+- **Duty Cycle**: On-time vs off-time ratio
+- **Patterns**: Regular, Double, Triple, Syncopated, Random, Ramp
+- **Beat Sync**: Strobe on beat detection
+- **Flash Trigger**: Single flash effects
+- **Blackout Mode**: Temporary screen blackout
+
+### Screen Shake
+Camera shake effects:
+- **Shake Types**: Perlin, Random, Sine, Bounce
+- **Position/Rotation Shake**: Control what gets shaken
+- **Beat Reactive**: Shake on audio beats
+- **Continuous Shake**: Subtle constant movement
+- **Bass Reactive**: Shake intensity from bass level
+- **Directional Shake**: Constrain to specific axes
+
+---
+
 ## UI Control Panel
 
 The UI panel (toggled with **H** key) contains all controls organized in sections:
@@ -225,6 +321,20 @@ The UI panel (toggled with **H** key) contains all controls organized in section
 | `OSCReceiver.cs` | OSC network input with full parameter mapping |
 | `MIDIInput.cs` | MIDI controller support with learn mode |
 | `PerformanceController.cs` | Keyboard shortcuts and fullscreen |
+
+### New Feature Scripts
+
+| File | Purpose |
+|------|---------|
+| `GlitchEffects.cs` | Digital glitch, vertex displacement, block corruption |
+| `ColorPaletteSystem.cs` | 15 color themes with smooth transitions |
+| `MirrorKaleidoscope.cs` | Mirror and kaleidoscope symmetry effects |
+| `AutoRandomizer.cs` | Perlin noise-based parameter drift |
+| `SynthwaveGrid.cs` | Retro horizon grid with sun |
+| `MotionTrails.cs` | Ghost/afterimage trail effect |
+| `DepthColorizer.cs` | Z-depth based color mapping |
+| `StrobeController.cs` | Strobe, flash, and blackout effects |
+| `ScreenShake.cs` | Camera shake with beat sync |
 
 ### Editor Scripts (`Assets/Scripts/RuttEtra/Editor/`)
 
@@ -424,6 +534,20 @@ RuttEtra > Add Analog Effects Only
 RuttEtra > Add Preset System Only
 ```
 
+**Add new experimental features:**
+```
+RuttEtra > Add New Features > Add All New Features
+RuttEtra > Add New Features > Glitch Effects
+RuttEtra > Add New Features > Color Palette System
+RuttEtra > Add New Features > Mirror Kaleidoscope
+RuttEtra > Add New Features > Auto Randomizer
+RuttEtra > Add New Features > Synthwave Grid
+RuttEtra > Add New Features > Strobe Controller
+RuttEtra > Add New Features > Screen Shake
+RuttEtra > Add New Features > Motion Trails
+RuttEtra > Add New Features > Depth Colorizer
+```
+
 ### File Locations
 - Settings: `Assets/Settings/RuttEtraSettings.asset`
 - Main scene: `Assets/Scenes/SampleScene.unity`
@@ -465,10 +589,12 @@ The following features have been implemented but require testing to verify funct
 
 **Audio Reactive System:**
 - Microphone capture and FFT analysis implemented
-- Parameter modulation (displacement, wave, hue, scale) implemented
+- Parameter modulation (displacement, wave, hue, scale, rotation, glow) implemented
 - Audio device selection dropdown in UI
-- **Needs testing:** Different audio devices, beat detection sensitivity tuning
-- **Setup:** Enable `enableAudio`, select device, enable modulation toggles
+- Reads directly from microphone clip for more reliable data capture
+- Debug logging shows audio levels every 2 seconds: `[AudioReactive] Levels - Bass:X.XXX Mid:X.XXX...`
+- **Known Issue:** Some microphones may show 0 levels even when selected. Check Windows Sound Settings to ensure the mic is enabled and not muted. Try increasing Input Gain significantly (5-10x).
+- **Setup:** Enable `enableAudio`, select device from dropdown, enable modulation toggles, adjust gain
 
 **Analog Effects (CRT/VHS):**
 - Uses Unity 6 RenderGraph API via `AnalogEffectsFeature`
@@ -479,8 +605,15 @@ The following features have been implemented but require testing to verify funct
 
 **Visual Feedback Effect:**
 - Currently uses legacy `OnRenderImage` approach
-- **Not functional in pure URP** - requires conversion to RenderGraph API
-- Planned for future update
+- **Not functional in URP** - `OnRenderImage` is not supported in Universal Render Pipeline
+- Displays warning in console when running in URP
+- Planned conversion to RenderGraph API in future update
+
+**New Experimental Features:**
+- All 9 new features (Glitch, Color Palette, Mirror/Kaleidoscope, Auto Randomizer, Synthwave Grid, Motion Trails, Depth Colorizer, Strobe Controller, Screen Shake) are integrated into the mesh generator and UI
+- Reset All button properly resets all features to defaults
+- Debug logging available for each feature when toggled
+- **Setup:** Run `RuttEtra > Add New Features > Add All New Features`, then `RuttEtra > Create UI`
 
 **MIDI Control:**
 - Implementation complete with learn mode
@@ -503,11 +636,19 @@ The following features have been implemented but require testing to verify funct
 
 ### Known Issues
 
-1. **Feedback Effect**: Not functional in URP. Requires conversion to RenderGraph API (planned).
+1. **Visual Feedback Effect**: Not functional in URP. The `OnRenderImage` callback is not supported in Universal Render Pipeline. Requires conversion to RenderGraph API (planned for future update).
 
-2. **Audio Device Permissions**: On some systems, microphone permissions must be granted. The device list refreshes automatically every few seconds.
+2. **Audio Reactive - Zero Levels**: Some microphones may show 0.000 for all audio levels even when properly selected. This is often a Windows audio routing issue:
+   - Check Windows Settings > Sound > Input to verify the microphone is working
+   - Ensure the mic isn't muted or disabled
+   - Try significantly increasing Input Gain (5-10x)
+   - Webcam microphones (like MX Brio) are detected but may require Windows privacy permissions
 
-3. **Post-Processing Performance**: CRT/VHS effects add GPU overhead. Disable if frame rate drops.
+3. **Audio Device Permissions**: On some systems, microphone permissions must be granted. The device list refreshes automatically every few seconds.
+
+4. **Post-Processing Performance**: CRT/VHS effects add GPU overhead. Disable if frame rate drops.
+
+5. **Motion Trails**: Fixed issue where trails would cause "Failed getting triangles" errors. Now properly handles line-topology meshes.
 
 ### Technical Notes for Developers
 
@@ -561,9 +702,15 @@ public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer
 1. Check that `enableAudio` is ON in the AudioReactive component
 2. Select an audio device from the dropdown (webcam mic, microphone, etc.)
 3. Enable at least one modulation toggle (e.g., "Mod Displacement")
-4. Increase the Input Gain if levels are too low
-5. Check Unity console for "No microphone found" errors
-6. Grant microphone permissions if prompted by OS
+4. **Significantly increase Input Gain** (try 5-10) - default may be too low
+5. Check Unity console for debug logs: `[AudioReactive] Levels - Bass:X.XXX...`
+6. If all levels show 0.000:
+   - Check **Windows Settings > Sound > Input** - verify microphone shows input
+   - Ensure microphone isn't muted in Windows sound mixer
+   - Grant microphone permissions if prompted by OS
+   - Try a different audio device from the dropdown
+7. For webcam microphones: Make sure it's enabled in Windows Privacy Settings > Microphone
+8. Console will show available devices at startup: `[AudioReactive] Found X audio input device(s):`
 
 **CRT/VHS effects not visible:**
 1. Run `RuttEtra > Setup Analog Effects Renderer` from the menu
@@ -589,6 +736,26 @@ public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer
 - Disable unused effects (CRT, VHS, Feedback)
 - Disable audio reactive if not needed
 - Lower the recording FPS if capturing video
+
+### Debug Logging
+
+The system outputs helpful debug logs to the Unity Console. Look for these prefixes:
+
+| Prefix | Information |
+|--------|-------------|
+| `[AudioReactive]` | Audio levels (every 2s), device selection, microphone status |
+| `[GlitchEffects]` | Glitch triggers, auto-trigger status |
+| `[AutoRandomizer]` | Randomizer speed/intensity when active |
+| `[ColorPalette]` | Palette changes and transitions |
+| `[StrobeController]` | Flash and blackout triggers |
+| `[ScreenShake]` | Shake triggers and intensity |
+| `[UI]` | Component initialization status at startup |
+| `[ResetAll]` | Confirmation when Reset All is pressed |
+
+To see which features are properly connected, check the startup log:
+```
+RuttEtraUI initialized. Settings: OK, Controller: OK, AudioReactive: OK, GlitchEffects: OK...
+```
 
 ---
 

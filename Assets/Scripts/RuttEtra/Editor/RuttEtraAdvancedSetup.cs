@@ -274,5 +274,284 @@ Presets saved to: " + Application.persistentDataPath + @"/Presets/
         Selection.activeGameObject = controller.gameObject;
         Debug.Log("PresetManager added. Use [ ] keys to cycle presets.");
     }
+    
+    [MenuItem("RuttEtra/Add New Features/Add All New Features")]
+    public static void AddAllNewFeatures()
+    {
+        var controller = Object.FindFirstObjectByType<RuttEtraController>();
+        if (controller == null)
+        {
+            EditorUtility.DisplayDialog("Error", "Run 'RuttEtra > Setup Scene' first", "OK");
+            return;
+        }
+        
+        var settings = controller.settings;
+        var audio = controller.GetComponent<AudioReactive>();
+        
+        // Add GlitchEffects
+        var glitch = controller.GetComponent<GlitchEffects>();
+        if (glitch == null)
+        {
+            glitch = controller.gameObject.AddComponent<GlitchEffects>();
+            glitch.audioReactive = audio;
+        }
+        
+        // Add ColorPaletteSystem
+        var palette = controller.GetComponent<ColorPaletteSystem>();
+        if (palette == null)
+        {
+            palette = controller.gameObject.AddComponent<ColorPaletteSystem>();
+            palette.settings = settings;
+        }
+        
+        // Add MirrorKaleidoscope
+        var mirror = controller.GetComponent<MirrorKaleidoscope>();
+        if (mirror == null)
+        {
+            mirror = controller.gameObject.AddComponent<MirrorKaleidoscope>();
+        }
+        
+        // Add AutoRandomizer
+        var randomizer = controller.GetComponent<AutoRandomizer>();
+        if (randomizer == null)
+        {
+            randomizer = controller.gameObject.AddComponent<AutoRandomizer>();
+            randomizer.settings = settings;
+            randomizer.audioReactive = audio;
+        }
+        
+        // Add DepthColorizer
+        var depth = controller.GetComponent<DepthColorizer>();
+        if (depth == null)
+        {
+            depth = controller.gameObject.AddComponent<DepthColorizer>();
+            depth.audioReactive = audio;
+        }
+        
+        // Add MotionTrails
+        var trails = controller.GetComponent<MotionTrails>();
+        if (trails == null)
+        {
+            trails = controller.gameObject.AddComponent<MotionTrails>();
+            trails.audioReactive = audio;
+        }
+        
+        // Add StrobeController to camera
+        var cam = Camera.main;
+        if (cam != null)
+        {
+            var strobe = cam.GetComponent<StrobeController>();
+            if (strobe == null)
+            {
+                strobe = cam.gameObject.AddComponent<StrobeController>();
+                strobe.settings = settings;
+                strobe.audioReactive = audio;
+            }
+            
+            var shake = cam.GetComponent<ScreenShake>();
+            if (shake == null)
+            {
+                shake = cam.gameObject.AddComponent<ScreenShake>();
+                shake.audioReactive = audio;
+            }
+            
+            EditorUtility.SetDirty(cam.gameObject);
+        }
+        
+        // Create SynthwaveGrid as child object
+        var existingGrid = Object.FindFirstObjectByType<SynthwaveGrid>();
+        if (existingGrid == null)
+        {
+            var gridObj = new GameObject("SynthwaveGrid");
+            var grid = gridObj.AddComponent<SynthwaveGrid>();
+            grid.audioReactive = audio;
+            EditorUtility.SetDirty(gridObj);
+        }
+        
+        EditorUtility.SetDirty(controller.gameObject);
+        
+        Debug.Log("All new features added!");
+        
+        string info = @"
+=== New Features Added ===
+
+On Controller:
+- GlitchEffects: Digital glitch, block displacement
+- ColorPaletteSystem: 15 color themes (Vaporwave, Cyberpunk, etc.)
+- MirrorKaleidoscope: Symmetry & kaleidoscope effects
+- AutoRandomizer: Evolving parameter drift
+- DepthColorizer: Z-based color gradients
+- MotionTrails: Afterimage/ghost effect
+
+On Camera:
+- StrobeController: Beat-synced strobe & flash
+- ScreenShake: Camera shake effects
+
+In Scene:
+- SynthwaveGrid: Retro horizon grid
+
+All features are disabled by default.
+Enable them in the Inspector or via UI.
+";
+        EditorUtility.DisplayDialog("New Features Added", info, "OK");
+    }
+    
+    [MenuItem("RuttEtra/Add New Features/Glitch Effects")]
+    public static void AddGlitchEffects()
+    {
+        var controller = Object.FindFirstObjectByType<RuttEtraController>();
+        if (controller == null) return;
+        
+        var glitch = controller.GetComponent<GlitchEffects>();
+        if (glitch == null)
+        {
+            glitch = controller.gameObject.AddComponent<GlitchEffects>();
+            glitch.audioReactive = controller.GetComponent<AudioReactive>();
+        }
+        
+        Selection.activeGameObject = controller.gameObject;
+        Debug.Log("GlitchEffects added. Enable in Inspector.");
+    }
+    
+    [MenuItem("RuttEtra/Add New Features/Color Palette System")]
+    public static void AddColorPalette()
+    {
+        var controller = Object.FindFirstObjectByType<RuttEtraController>();
+        if (controller == null) return;
+        
+        var palette = controller.GetComponent<ColorPaletteSystem>();
+        if (palette == null)
+        {
+            palette = controller.gameObject.AddComponent<ColorPaletteSystem>();
+            palette.settings = controller.settings;
+        }
+        
+        Selection.activeGameObject = controller.gameObject;
+        Debug.Log("ColorPaletteSystem added with 15 presets.");
+    }
+    
+    [MenuItem("RuttEtra/Add New Features/Mirror Kaleidoscope")]
+    public static void AddMirrorKaleidoscope()
+    {
+        var controller = Object.FindFirstObjectByType<RuttEtraController>();
+        if (controller == null) return;
+        
+        var mirror = controller.GetComponent<MirrorKaleidoscope>();
+        if (mirror == null)
+        {
+            mirror = controller.gameObject.AddComponent<MirrorKaleidoscope>();
+        }
+        
+        Selection.activeGameObject = controller.gameObject;
+        Debug.Log("MirrorKaleidoscope added.");
+    }
+    
+    [MenuItem("RuttEtra/Add New Features/Auto Randomizer")]
+    public static void AddAutoRandomizer()
+    {
+        var controller = Object.FindFirstObjectByType<RuttEtraController>();
+        if (controller == null) return;
+        
+        var randomizer = controller.GetComponent<AutoRandomizer>();
+        if (randomizer == null)
+        {
+            randomizer = controller.gameObject.AddComponent<AutoRandomizer>();
+            randomizer.settings = controller.settings;
+            randomizer.audioReactive = controller.GetComponent<AudioReactive>();
+        }
+        
+        Selection.activeGameObject = controller.gameObject;
+        Debug.Log("AutoRandomizer added. Creates evolving visuals.");
+    }
+    
+    [MenuItem("RuttEtra/Add New Features/Synthwave Grid")]
+    public static void AddSynthwaveGrid()
+    {
+        var existingGrid = Object.FindFirstObjectByType<SynthwaveGrid>();
+        if (existingGrid != null)
+        {
+            Selection.activeGameObject = existingGrid.gameObject;
+            return;
+        }
+        
+        var gridObj = new GameObject("SynthwaveGrid");
+        var grid = gridObj.AddComponent<SynthwaveGrid>();
+        grid.audioReactive = Object.FindFirstObjectByType<AudioReactive>();
+        
+        Selection.activeGameObject = gridObj;
+        Debug.Log("SynthwaveGrid added. Enable in Inspector.");
+    }
+    
+    [MenuItem("RuttEtra/Add New Features/Strobe Controller")]
+    public static void AddStrobeController()
+    {
+        var cam = Camera.main;
+        if (cam == null) return;
+        
+        var strobe = cam.GetComponent<StrobeController>();
+        if (strobe == null)
+        {
+            strobe = cam.gameObject.AddComponent<StrobeController>();
+            strobe.audioReactive = Object.FindFirstObjectByType<AudioReactive>();
+            
+            var controller = Object.FindFirstObjectByType<RuttEtraController>();
+            if (controller != null)
+                strobe.settings = controller.settings;
+        }
+        
+        Selection.activeGameObject = cam.gameObject;
+        Debug.Log("StrobeController added. Can sync to beat.");
+    }
+    
+    [MenuItem("RuttEtra/Add New Features/Screen Shake")]
+    public static void AddScreenShake()
+    {
+        var cam = Camera.main;
+        if (cam == null) return;
+        
+        var shake = cam.GetComponent<ScreenShake>();
+        if (shake == null)
+        {
+            shake = cam.gameObject.AddComponent<ScreenShake>();
+            shake.audioReactive = Object.FindFirstObjectByType<AudioReactive>();
+        }
+        
+        Selection.activeGameObject = cam.gameObject;
+        Debug.Log("ScreenShake added. Can trigger on beat.");
+    }
+    
+    [MenuItem("RuttEtra/Add New Features/Motion Trails")]
+    public static void AddMotionTrails()
+    {
+        var controller = Object.FindFirstObjectByType<RuttEtraController>();
+        if (controller == null) return;
+        
+        var trails = controller.GetComponent<MotionTrails>();
+        if (trails == null)
+        {
+            trails = controller.gameObject.AddComponent<MotionTrails>();
+            trails.audioReactive = controller.GetComponent<AudioReactive>();
+        }
+        
+        Selection.activeGameObject = controller.gameObject;
+        Debug.Log("MotionTrails added. Creates afterimage effect.");
+    }
+    
+    [MenuItem("RuttEtra/Add New Features/Depth Colorizer")]
+    public static void AddDepthColorizer()
+    {
+        var controller = Object.FindFirstObjectByType<RuttEtraController>();
+        if (controller == null) return;
+        
+        var depth = controller.GetComponent<DepthColorizer>();
+        if (depth == null)
+        {
+            depth = controller.gameObject.AddComponent<DepthColorizer>();
+            depth.audioReactive = controller.GetComponent<AudioReactive>();
+        }
+        
+        Selection.activeGameObject = controller.gameObject;
+        Debug.Log("DepthColorizer added. Colors mesh by Z depth.");
+    }
 }
 #endif
